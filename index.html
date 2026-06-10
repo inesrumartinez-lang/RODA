@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0F1216">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RODA">
+<title>RODA · Tu entreno de hoy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fondo:#0F1216; --card:#171C23; --panel:#11151B; --borde:#232A33; --borde2:#2A323D;
+  --texto:#E8EBF0; --gris:#8A93A0; --grisosc:#5C6573;
+  --rosa:#FF5C8A; --rosaclaro:#FF8FAF;
+  --verde:#4ADE80; --ambar:#FFC53D; --rojo:#FF5C5C; --azul:#4D7FFF; --blancoz:#F2F4F7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Manrope',-apple-system,system-ui,sans-serif;
+  background:var(--fondo);color:var(--texto);
+  font-size:15px;line-height:1.5;
+  padding:max(18px,env(safe-area-inset-top)) 16px calc(34px + env(safe-area-inset-bottom));
+}
+.cont{max-width:480px;margin:0 auto}
+h1{font-family:'Sora',sans-serif;font-weight:700;font-size:26px;letter-spacing:.06em}
+.fecha{font-size:13px;color:var(--gris)}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+header .dcha{display:flex;align-items:center;gap:12px}
+.icoBtn{background:none;border:none;color:var(--gris);font-size:20px;cursor:pointer;padding:4px;line-height:1}
+
+.crd{background:var(--card);border:1px solid var(--borde);border-radius:18px;padding:16px;margin-bottom:12px}
+.lbl{font-size:12px;color:var(--gris);letter-spacing:.02em;margin-bottom:10px}
+.linkBtn{background:none;border:none;font:inherit;font-size:13px;color:var(--rosaclaro);cursor:pointer;padding:2px}
+
+input[type=number],input[type=text],input[type=password],textarea,select{
+  width:100%;background:var(--panel);border:1px solid var(--borde2);border-radius:10px;
+  color:var(--texto);font:inherit;font-size:14px;padding:9px 10px;-webkit-appearance:none;appearance:none
+}
+textarea{resize:vertical;min-height:42px}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--gris) 50%),linear-gradient(135deg,var(--gris) 50%,transparent 50%);background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:26px}
+input:focus-visible,textarea:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--rosa);outline-offset:1px}
+label{font-size:12px;color:var(--gris);display:block;margin-bottom:4px}
+
+input[type=range].rng{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:3px;background:var(--borde2);outline:none}
+input[type=range].rng::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--rosa);border:4px solid var(--fondo);cursor:pointer}
+input[type=range].rng::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--rosa);border:4px solid var(--fondo);cursor:pointer}
+input[type=range].rng:disabled{opacity:.35}
+
+.chip{border:1px solid var(--borde2);background:var(--panel);color:#C7CDD6;border-radius:999px;padding:10px 0;font-size:13.5px;font-weight:600;text-align:center;cursor:pointer;font-family:inherit}
+.chip.on{background:var(--rosa);border-color:var(--rosa);color:#1A0810}
+.chip.mini{padding:5px 12px;font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+
+.cta{width:100%;background:var(--blancoz);color:var(--fondo);border:none;border-radius:999px;padding:15px;
+  font-family:'Sora',sans-serif;font-weight:600;font-size:15.5px;cursor:pointer}
+.cta:active{transform:scale(.98)}
+.cta[disabled]{opacity:.55;cursor:wait;transform:none}
+.sec{width:100%;background:var(--panel);color:#C7CDD6;border:1px solid var(--borde2);border-radius:999px;padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.sec[disabled]{opacity:.55;cursor:wait}
+.ghost{background:none;border:1px dashed #3A4350;color:var(--gris);border-radius:12px;padding:9px;width:100%;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+
+.semaforo{display:flex;gap:14px;align-items:center}
+.semaforo .txt b{font-family:'Sora',sans-serif;font-weight:600;font-size:16px;display:block;margin-bottom:3px}
+.semaforo .txt .met{font-size:12.5px;color:#C7CDD6}
+.semaforo .txt .det{font-size:11.5px;color:var(--gris);margin-top:2px}
+#detalleHoy{display:none;margin-top:14px;border-top:1px dashed var(--borde);padding-top:12px}
+#detalleHoy.visible{display:block}
+.met3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+
+.slfila{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.slfila:last-child{margin-bottom:0}
+.slfila span.nom{font-size:13px;color:#C7CDD6;width:96px;flex:none}
+.slfila .val{min-width:26px;text-align:right;font-family:'Sora',sans-serif;font-weight:600;font-size:15px;color:var(--rosaclaro)}
+
+.nota{font-size:12.5px;color:var(--gris);margin-bottom:12px}
+.bloqueSel{margin-bottom:14px}
+.durFila{display:flex;align-items:center;gap:12px}
+#vDur{font-family:'Sora',sans-serif;font-weight:600;font-size:16px;min-width:64px;text-align:right}
+
+#resultado,#editorCard,#planCard,#ajustes{display:none}
+#resultado.visible,#editorCard.visible,#planCard.visible,#ajustes.visible{display:block}
+.cabRes{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.badge{background:var(--borde2);color:#C7CDD6;border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:700}
+.badge.ok{background:#15301F;color:var(--verde)}
+.tituloEnt{font-family:'Sora',sans-serif;font-weight:600;font-size:19px;margin-bottom:8px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.pill{border:1px solid var(--borde2);border-radius:8px;padding:3px 8px;font-size:11.5px;color:#C7CDD6}
+.ajuste{font-size:12.5px;color:var(--gris);margin-bottom:12px}
+.perfil{display:flex;align-items:flex-end;gap:2px;height:88px;margin-bottom:6px}
+.perfil div{border-radius:5px 5px 2px 2px}
+.leyenda{display:flex;gap:10px;font-size:10.5px;color:var(--gris);margin-bottom:14px;flex-wrap:wrap}
+.leyenda i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.bloque{margin-bottom:10px}
+.bloque h3{font-size:13px;font-weight:700;color:var(--texto);letter-spacing:.02em;margin-bottom:2px}
+.paso{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:#C7CDD6;padding:6px 0;border-bottom:1px dashed var(--borde)}
+.paso:last-child{border-bottom:none}
+.paso .eq{text-align:right;flex:none}
+.paso .eq b{font-weight:600;color:var(--texto);font-variant-numeric:tabular-nums;font-size:12.5px;display:block}
+.paso .eq small{font-size:11px;color:var(--gris)}
+.aviso{border:1px solid var(--borde2);border-left:4px solid var(--ambar);border-radius:10px;background:#221C0E;padding:9px 11px;font-size:12.5px;margin-bottom:12px}
+.error{border:1px solid var(--borde2);border-left:4px solid var(--rojo);border-radius:10px;background:#241114;padding:10px 12px;font-size:13px;margin-top:12px;display:none}
+.error.visible{display:block}
+
+.tile{background:var(--panel);border-radius:14px;padding:12px 10px;text-align:center}
+.tile b{font-family:'Sora',sans-serif;font-size:20px;font-weight:600;display:block;font-variant-numeric:tabular-nums}
+.tile span{font-size:11px;color:var(--gris)}
+svg.spark{width:100%;height:58px;display:block}
+
+.stp{display:inline-flex;align-items:center;border:1px solid var(--borde2);border-radius:999px;overflow:hidden;flex:none}
+.stp button{background:var(--panel);border:none;color:var(--rosaclaro);width:32px;height:30px;font-size:17px;font-weight:700;cursor:pointer}
+.stp span{min-width:50px;text-align:center;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--texto)}
+.epaso{border-top:1px dashed var(--borde);padding:9px 0;cursor:pointer}
+.epasoCab{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:#C7CDD6}
+.panel{background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:10px;margin-top:9px;cursor:default}
+.fila{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;gap:8px}
+.fila:last-child{margin-bottom:0}
+.fila .lbl{margin:0}
+.eCab{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.tgl2{display:flex;border:1px solid var(--borde2);border-radius:999px;overflow:hidden}
+.tgl2 button{background:var(--panel);border:none;color:var(--gris);padding:5px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.tgl2 button.on{background:var(--rosa);color:#1A0810}
+
+.diaPlan{display:grid;grid-template-columns:44px 1fr 96px;gap:8px;align-items:center;margin-bottom:7px}
+.diaPlan b{font-size:13px;font-weight:700}
+.autoFila{display:grid;grid-template-columns:1fr 86px;gap:8px;align-items:center;margin:12px 0 10px}
+.check{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--texto);font-weight:500;cursor:pointer}
+.check input{width:auto;accent-color:var(--rosa);transform:scale(1.25)}
+
+.pie{display:flex;justify-content:space-between;align-items:center;color:var(--grisosc);font-size:12.5px;margin-top:6px}
+.pie .links button{background:none;border:none;font:inherit;color:var(--gris);text-decoration:underline;cursor:pointer;padding:2px 4px}
+#msg{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:92%;
+  background:#1E2630;border:1px solid var(--borde2);color:var(--texto);border-radius:14px;padding:11px 16px;font-size:13px;
+  opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;text-align:center}
+#msg.visible{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="cont">
+
+<header>
+  <h1>RODA</h1>
+  <div class="dcha">
+    <span class="fecha" id="fechaHoy">—</span>
+    <button class="icoBtn" id="btnAjustes" aria-label="Ajustes">⚙</button>
+  </div>
+</header>
+
+<!-- Cómo llegas hoy -->
+<section class="crd" id="cardHoy">
+  <div style="display:flex;justify-content:space-between;align-items:baseline">
+    <div class="lbl" style="margin-bottom:12px">Cómo llegas hoy</div>
+    <button class="linkBtn" id="btnEditarHoy">Editar</button>
+  </div>
+  <div class="semaforo">
+    <svg width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="Estado del día">
+      <circle cx="42" cy="42" r="34" fill="none" stroke="#232A33" stroke-width="8"/>
+      <circle id="ring" cx="42" cy="42" r="34" fill="none" stroke="#5C6573" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 214" transform="rotate(-90 42 42)"/>
+      <text id="ringTxt" x="42" y="47" text-anchor="middle" fill="#E8EBF0" style="font-family:'Sora',sans-serif;font-size:21px;font-weight:600">–</text>
+    </svg>
+    <div class="txt" style="flex:1">
+      <b id="nivelR" style="color:var(--gris)">Sin datos aún</b>
+      <div class="met" id="metHoy">Conecta el reloj o pulsa Editar.</div>
+      <div class="det" id="detalleR"></div>
+    </div>
+  </div>
+  <div id="detalleHoy">
+    <div class="met3">
+      <div><label for="hrv">HRV (ms)</label><input type="number" id="hrv" inputmode="decimal" placeholder="—"></div>
+      <div><label for="sueno">Sueño (h)</label><input type="number" id="sueno" inputmode="decimal" step="0.1" placeholder="—"></div>
+      <div><label for="fcr">FC reposo</label><input type="number" id="fcr" inputmode="numeric" placeholder="—"></div>
+    </div>
+    <label for="coment">Algo que deba saber (opcional)</label>
+    <textarea id="coment" placeholder="Ej.: ayer gimnasio fuerte, hoy salgo con grupeta…"></textarea>
+  </div>
+</section>
+
+<!-- Sensaciones -->
+<section class="crd">
+  <div class="lbl">Sensaciones de hoy</div>
+  <div class="slfila">
+    <span class="nom">Motivación</span>
+    <input type="range" class="rng" min="1" max="5" step="1" value="3" id="sMot" aria-label="Motivación">
+    <span class="val" id="vMot">3</span>
+  </div>
+  <div class="slfila">
+    <span class="nom">Fatiga mental</span>
+    <input type="range" class="rng" min="1" max="5" step="1" value="3" id="sMen" aria-label="Fatiga mental">
+    <span class="val" id="vMen">3</span>
+  </div>
+  <div class="slfila">
+    <span class="nom">Fatiga física</span>
+    <input type="range" class="rng" min="1" max="5" step="1" value="3" id="sFis" aria-label="Fatiga física">
+    <span class="val" id="vFis">3</span>
+  </div>
+</section>
+
+<!-- Tu entreno -->
+<section class="crd">
+  <div class="lbl">Tu entreno</div>
+  <div class="nota" id="notaPlan" style="display:none"></div>
+  <div class="bloqueSel">
+    <label>Tipo</label>
+    <div class="grid4" id="chipsTipo">
+      <button class="chip on" data-v="auto">Decide RODA</button>
+      <button class="chip" data-v="series_cortas">Series cortas</button>
+      <button class="chip" data-v="series_largas">Series largas</button>
+      <button class="chip" data-v="rodaje">Rodaje</button>
+    </div>
+  </div>
+  <div class="bloqueSel">
+    <label>Objetivo</label>
+    <div class="grid2" id="chipsObj">
+      <button class="chip on" data-v="potencia">Potencia</button>
+      <button class="chip" data-v="fc">Frecuencia cardíaca</button>
+    </div>
+  </div>
+  <div class="bloqueSel" style="margin-bottom:4px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <label style="margin:0">Duración</label>
+      <button id="durAuto" class="chip mini">Auto</button>
+    </div>
+    <div class="durFila">
+      <input type="range" class="rng" min="45" max="240" step="15" value="90" id="sDur" style="flex:1" aria-label="Duración en minutos">
+      <span id="vDur">1 h 30</span>
+    </div>
+  </div>
+</section>
+
+<button class="cta" id="btnGenerar">Generar y enviar al Garmin</button>
+<div class="error" id="errorGen"></div>
+<div style="height:12px"></div>
+
+<!-- Resultado -->
+<section class="crd" id="resultado">
+  <div class="cabRes">
+    <span class="lbl" style="margin:0" id="etiquetaRes">Entreno de hoy</span>
+    <span class="badge" id="badge">Sin enviar</span>
+  </div>
+  <div class="tituloEnt" id="entNombre"></div>
+  <div class="pills" id="entPills"></div>
+  <p class="ajuste" id="entAjuste"></p>
+  <div class="perfil" id="perfil" aria-label="Perfil del entreno"></div>
+  <div class="leyenda">
+    <span><i style="background:var(--azul)"></i>Z1–Z2</span>
+    <span><i style="background:var(--ambar)"></i>Tempo/SS</span>
+    <span><i style="background:var(--rojo)"></i>Umbral/VO2</span>
+    <span><i style="background:var(--blancoz)"></i>A bloque</span>
+  </div>
+  <div id="entBloques"></div>
+  <p class="ajuste" id="entResumen" style="margin-top:10px"></p>
+  <div class="aviso" id="entAviso" style="display:none"></div>
+  <div class="grid2" style="margin-top:4px">
+    <button class="sec" id="btnOtra">Otra propuesta</button>
+    <button class="sec" id="btnEditor">Editar</button>
+    <button class="sec" id="btnGarmin">Enviar al Garmin</button>
+    <button class="sec" id="btnFit">Compartir .FIT</button>
+  </div>
+</section>
+
+<!-- Editor -->
+<section class="crd" id="editorCard">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <span style="font-family:'Sora',sans-serif;font-weight:600;font-size:16px">Editar entreno</span>
+    <button class="icoBtn" id="edCerrar" aria-label="Cerrar editor">✕</button>
+  </div>
+  <label for="edNombre">Nombre</label>
+  <input type="text" id="edNombre" style="margin-bottom:10px">
+  <div class="pills">
+    <span class="pill" id="edDur">—</span>
+    <span class="pill" id="edTss">—</span>
+  </div>
+  <div class="perfil" id="edPerfil" style="height:64px;margin-bottom:14px"></div>
+  <div id="edBloques"></div>
+  <button class="ghost" id="edAddBloque" style="margin-bottom:12px">+ Añadir bloque</button>
+  <div class="grid2">
+    <button class="sec" id="edCancelar">Cancelar</button>
+    <button class="cta" id="edGuardar" style="padding:11px;font-size:14px">Guardar</button>
+  </div>
+</section>
+
+<!-- Estado de forma -->
+<section class="crd">
+  <div class="lbl">Estado de forma</div>
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="tile"><b id="fCtl">–</b><span>Fitness · CTL</span></div>
+    <div class="tile"><b id="fAtl">–</b><span>Fatiga · ATL</span></div>
+  </div>
+  <div class="tile" style="margin-bottom:14px"><b id="fTsb">–</b><span>Frescura · TSB</span></div>
+  <div class="lbl" style="margin-bottom:6px">HRV · últimos 14 días</div>
+  <svg class="spark" id="spark" viewBox="0 0 300 58" preserveAspectRatio="none" aria-hidden="true"></svg>
+</section>
+
+<!-- Plan + piloto -->
+<section class="crd" id="planCard">
+  <div class="lbl">Piloto automático</div>
+  <p class="nota">Con el piloto activo, cada mañana RODA genera el entreno del día según este plan, lo manda a tu Garmin y te avisa por email. Tú solo pedaleas.</p>
+  <div class="autoFila">
+    <label class="check" style="margin:0"><input type="checkbox" id="autoActivo"> Activar piloto</label>
+    <select id="autoHora" aria-label="Hora del piloto"></select>
+  </div>
+  <label class="check" style="margin-bottom:14px"><input type="checkbox" id="autoEmail" checked> Enviarme email con el entreno</label>
+  <div class="bloqueSel">
+    <label>Objetivo del piloto</label>
+    <div class="grid2" id="chipsObjPlan">
+      <button class="chip on" data-v="potencia">Potencia</button>
+      <button class="chip" data-v="fc">Frecuencia cardíaca</button>
+    </div>
+  </div>
+  <div class="lbl">Plan semanal</div>
+  <div id="planDias"></div>
+  <button class="sec" id="btnGuardarPlan" style="margin-top:10px">Guardar plan</button>
+</section>
+
+<!-- Ajustes -->
+<section class="crd" id="ajustes">
+  <div class="lbl">Ajustes</div>
+  <div style="margin-bottom:10px"><label for="ajUrl">URL del backend (Apps Script)</label><input type="text" id="ajUrl" placeholder="https://script.google.com/macros/s/…/exec"></div>
+  <div style="margin-bottom:10px"><label for="ajToken">Token</label><input type="password" id="ajToken" placeholder="tu contraseña secreta"></div>
+  <div class="grid2" style="margin-bottom:12px">
+    <div><label for="ajFtp">FTP (W)</label><input type="number" id="ajFtp" inputmode="numeric"></div>
+    <div><label for="ajLthr">FC umbral (ppm)</label><input type="number" id="ajLthr" inputmode="numeric" placeholder="auto"></div>
+  </div>
+  <p class="nota">FC umbral en blanco = la leo de tus zonas de intervals.icu.</p>
+  <label class="check" style="margin-bottom:12px"><input type="checkbox" id="ajAutoEnviar" checked> Al generar, enviar directo al Garmin (un solo toque)</label>
+  <button class="cta" id="btnGuardarAj" style="padding:12px;font-size:14.5px">Guardar y conectar</button>
+</section>
+
+<div class="pie">
+  <span id="conexion">Sin configurar</span>
+  <span class="links">
+    <button id="btnPlan">Plan</button> ·
+    <button id="btnAjustes2">Ajustes</button>
+  </span>
+</div>
+
+</div>
+<div id="msg" role="status"></div>
+
+<script>
+/* ============================================================
+   RODA v3 · frontend
+   ============================================================ */
+var cfg = {
+  url: localStorage.getItem('roda_url') || '',
+  token: localStorage.getItem('roda_token') || ''
+};
+var autoEnviar = localStorage.getItem('roda_envia') !== '0';
+var estado = { ftp: 200, lthr: null, entreno: null, fecha: null, plan: null };
+
+function $(id){ return document.getElementById(id); }
+function msg(t){
+  var m = $('msg'); m.textContent = t; m.classList.add('visible');
+  clearTimeout(msg._t); msg._t = setTimeout(function(){ m.classList.remove('visible'); }, 4600);
+}
+function fmtSeg(s){
+  s = Math.round(s);
+  var m = Math.floor(s/60), r = s%60;
+  return r ? (m + ':' + (r<10?'0':'') + r) : (m + "'");
+}
+function fmtL(seg){
+  var m = Math.round(seg/60), h = Math.floor(m/60);
+  return h ? (h + ' h' + (m%60? ' ' + (m%60<10?'0':'') + (m%60) : '')) : (m + ' min');
+}
+
+/* ---------- equivalencias potencia <-> FC (aprox, orientativas) ---------- */
+var ANC = [[45,65],[55,69],[75,83],[88,92],[95,97],[105,104],[115,107]];
+function interp(x, tabla){
+  if (x <= tabla[0][0]) return tabla[0][1];
+  for (var i=1;i<tabla.length;i++){
+    if (x <= tabla[i][0]){
+      var a=tabla[i-1], b=tabla[i];
+      return a[1] + (b[1]-a[1])*(x-a[0])/(b[0]-a[0]);
+    }
+  }
+  return tabla[tabla.length-1][1];
+}
+function w2fc(pctFtp){ return Math.round(interp(Math.min(125,Math.max(40,pctFtp)), ANC)); }
+function fc2w(pctLthr){
+  var inv = ANC.map(function(a){ return [a[1],a[0]]; });
+  return Math.round(interp(Math.min(108,Math.max(60,pctLthr)), inv));
+}
+function colorPot(p){ return p<=75?'var(--azul)':p<=94?'var(--ambar)':p<=115?'var(--rojo)':'var(--blancoz)'; }
+function colorFC(p){ return p<=83?'var(--azul)':p<=94?'var(--ambar)':p<=106?'var(--rojo)':'var(--blancoz)'; }
+function alturaPot(p){ return Math.max(14, Math.min(100, ((Math.min(130,Math.max(35,p))-30)/100)*100)); }
+function alturaFC(p){ return Math.max(14, Math.min(100, ((Math.min(112,Math.max(55,p))-50)/62)*100)); }
+
+/* ---------- red ---------- */
+function get(params){
+  var qs = new URLSearchParams(Object.assign({ token: cfg.token }, params)).toString();
+  return fetch(cfg.url + '?' + qs).then(function(r){ return r.json(); });
+}
+function post(accion, cuerpo){
+  cuerpo = cuerpo || {};
+  cuerpo.action = accion; cuerpo.token = cfg.token;
+  return fetch(cfg.url, {
+    method:'POST',
+    headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+    body: JSON.stringify(cuerpo)
+  }).then(function(r){ return r.json(); });
+}
+function sinConfig(){
+  return !cfg.url || cfg.url.indexOf('https://script.google.com') !== 0 || !cfg.token;
+}
+
+/* ---------- sliders de sensaciones ---------- */
+function fillRng(sl){
+  var pc = (sl.value - sl.min) / (sl.max - sl.min) * 100;
+  sl.style.background = 'linear-gradient(90deg, var(--rosa) ' + pc + '%, var(--borde2) ' + pc + '%)';
+}
+[['sMot','vMot'],['sMen','vMen'],['sFis','vFis']].forEach(function(par){
+  var s = $(par[0]), v = $(par[1]);
+  fillRng(s);
+  s.addEventListener('input', function(){ v.textContent = s.value; fillRng(s); });
+});
+
+/* ---------- chips genéricos ---------- */
+function montarChips(id, alPulsar){
+  $(id).addEventListener('click', function(e){
+    var b = e.target.closest('.chip'); if (!b) return;
+    this.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    if (alPulsar) alPulsar(b.dataset.v);
+  });
+}
+function valorChips(id){ var on = $(id).querySelector('.on'); return on ? on.dataset.v : null; }
+function marcarChip(id, v){
+  var ok=false;
+  $(id).querySelectorAll('.chip').forEach(function(ch){
+    var on = ch.dataset.v === String(v);
+    ch.classList.toggle('on', on); if (on) ok=true;
+  });
+  return ok;
+}
+montarChips('chipsTipo', function(v){ localStorage.setItem('roda_tipo', v); });
+montarChips('chipsObj', function(v){ localStorage.setItem('roda_obj', v); });
+montarChips('chipsObjPlan');
+
+/* ---------- duración ---------- */
+var durAutoOn = false;
+function pintaDur(){
+  var sl = $('sDur');
+  if (durAutoOn){
+    $('vDur').textContent = 'Auto'; sl.disabled = true; $('durAuto').classList.add('on');
+  } else {
+    sl.disabled = false; $('durAuto').classList.remove('on');
+    $('vDur').textContent = fmtL(parseInt(sl.value,10)*60);
+    fillRng(sl);
+  }
+  localStorage.setItem('roda_dur', durAutoOn ? 'auto' : sl.value);
+}
+$('sDur').addEventListener('input', pintaDur);
+$('durAuto').addEventListener('click', function(){ durAutoOn = !durAutoOn; pintaDur(); });
+
+/* ---------- tarjeta "hoy" ---------- */
+$('btnEditarHoy').addEventListener('click', function(){
+  var d = $('detalleHoy');
+  var abierto = d.classList.toggle('visible');
+  this.textContent = abierto ? 'Listo' : 'Editar';
+  if (!abierto) lineaHoy();
+});
+function lineaHoy(){
+  var partes = [];
+  if ($('hrv').value) partes.push('HRV ' + $('hrv').value + ' ms');
+  if ($('sueno').value) partes.push('Sueño ' + $('sueno').value + ' h');
+  if ($('fcr').value) partes.push('FC ' + $('fcr').value);
+  if (partes.length) $('metHoy').textContent = partes.join(' · ');
+}
+
+/* ---------- pintar estado ---------- */
+function pintarReadiness(r){
+  if (!r) return;
+  var colores = { verde:'var(--verde)', ambar:'var(--ambar)', rojo:'var(--rojo)' };
+  var nombres = { verde:'Día verde', ambar:'Día ámbar', rojo:'Día rojo' };
+  var tiene = r.score !== undefined && r.score !== null && r.hoy;
+  var ring = $('ring');
+  if (tiene){
+    ring.setAttribute('stroke', colores[r.nivel] || '#5C6573');
+    ring.setAttribute('stroke-dasharray', (214*r.score/100).toFixed(1) + ' 214');
+    $('ringTxt').textContent = r.score;
+    $('nivelR').textContent = nombres[r.nivel] || '—';
+    $('nivelR').style.color = colores[r.nivel] || 'var(--texto)';
+  }
+  $('detalleR').textContent = (r.detalle && r.detalle.length) ? r.detalle.join(' · ') : (tiene ? 'Todo en orden según tus datos.' : '');
+  if (r.hoy){
+    if (r.hoy.hrv && !$('hrv').value) $('hrv').value = r.hoy.hrv;
+    if (r.hoy.sueno_h && !$('sueno').value) $('sueno').value = r.hoy.sueno_h;
+    if (r.hoy.fc_reposo && !$('fcr').value) $('fcr').value = r.hoy.fc_reposo;
+    if (r.hoy.motivacion){ $('sMot').value = r.hoy.motivacion; $('vMot').textContent = r.hoy.motivacion; fillRng($('sMot')); }
+    if (r.hoy.fatiga_mental){ $('sMen').value = r.hoy.fatiga_mental; $('vMen').textContent = r.hoy.fatiga_mental; fillRng($('sMen')); }
+    if (r.hoy.fatiga_fisica){ $('sFis').value = r.hoy.fatiga_fisica; $('vFis').textContent = r.hoy.fatiga_fisica; fillRng($('sFis')); }
+    lineaHoy();
+  }
+}
+function pintarForma(f){
+  if (!f || f.error){ $('fCtl').textContent='–'; $('fAtl').textContent='–'; $('fTsb').textContent='–'; return; }
+  $('fCtl').textContent = f.ctl; $('fAtl').textContent = f.atl;
+  var t = $('fTsb');
+  t.textContent = (f.tsb>0?'+':'') + f.tsb;
+  t.style.color = f.tsb < -15 ? 'var(--rojo)' : (f.tsb < -5 ? 'var(--ambar)' : 'var(--verde)');
+}
+function pintarSpark(serie){
+  var svg = $('spark'); svg.innerHTML = '';
+  var pts = (serie||[]).filter(function(b){ return b.hrv; });
+  if (pts.length < 2) return;
+  var vals = pts.map(function(b){ return b.hrv; });
+  var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  if (max - min < 6){ max += 3; min -= 3; }
+  var W=300, H=58, pad=6;
+  function x(i){ return pad + i*(W-2*pad)/(pts.length-1); }
+  function y(v){ return H-pad - (v-min)*(H-2*pad)/(max-min); }
+  var linea = pts.map(function(b,i){ return (i?'L':'M') + x(i).toFixed(1) + ' ' + y(b.hrv).toFixed(1); }).join(' ');
+  var area = linea + ' L' + x(pts.length-1).toFixed(1) + ' ' + H + ' L' + pad + ' ' + H + ' Z';
+  svg.innerHTML =
+    '<path d="'+area+'" fill="#FF5C8A" opacity="0.12"/>' +
+    '<path d="'+linea+'" fill="none" stroke="#FF5C8A" stroke-width="2"/>' +
+    '<circle cx="'+x(pts.length-1).toFixed(1)+'" cy="'+y(pts[pts.length-1].hrv).toFixed(1)+'" r="3.2" fill="#FF8FAF"/>';
+}
+
+function preseleccionar(planHoy){
+  var t = localStorage.getItem('roda_tipo');
+  var o = localStorage.getItem('roda_obj');
+  var d = localStorage.getItem('roda_dur');
+  if (o) marcarChip('chipsObj', o);
+  if (planHoy && planHoy.tipo && planHoy.tipo !== 'descanso'){
+    marcarChip('chipsTipo', planHoy.tipo === 'auto' ? 'auto' : planHoy.tipo);
+    if (planHoy.min){ $('sDur').value = Math.min(240, Math.max(45, planHoy.min)); durAutoOn = false; }
+    $('notaPlan').style.display = 'block';
+    $('notaPlan').textContent = 'Según tu plan, hoy: ' + nombreTipo(planHoy.tipo) + (planHoy.min ? ' de ' + fmtL(planHoy.min*60) : '') + '. Ya está seleccionado.';
+  } else {
+    if (planHoy && planHoy.tipo === 'descanso'){
+      $('notaPlan').style.display = 'block';
+      $('notaPlan').textContent = 'Según tu plan, hoy toca descanso. Si aun así quieres salir, genera igualmente.';
+    }
+    if (t) marcarChip('chipsTipo', t);
+    if (d === 'auto') durAutoOn = true;
+    else if (d) $('sDur').value = d;
+  }
+  pintaDur();
+}
+function nombreTipo(t){
+  return { auto:'lo que decida RODA', series_cortas:'series cortas', series_largas:'series largas', rodaje:'rodaje', descanso:'descanso' }[t] || t;
+}
+
+function cargarEstado(){
+  if (sinConfig()){ $('conexion').textContent = 'Sin configurar'; abrirAjustes(); return; }
+  $('conexion').textContent = 'Conectando…';
+  get({ action:'estado' }).then(function(d){
+    if (!d.ok){ $('conexion').textContent='Error'; msg(d.mensaje || 'No he podido leer tu estado.'); return; }
+    $('conexion').textContent = 'Conectada';
+    estado.ftp = d.ftp || 200; estado.lthr = d.lthr || null; estado.fecha = d.fecha; estado.plan = d.plan || null;
+    $('ajFtp').value = estado.ftp;
+    if (estado.lthr) $('ajLthr').placeholder = estado.lthr + ' (intervals)';
+    pintarReadiness(d.readiness);
+    pintarForma(d.forma);
+    pintarSpark(d.bienestar14);
+    preseleccionar(d.planHoy);
+    pintarPlan(d.plan);
+    if (d.entrenoHoy && d.entrenoHoy.entreno){
+      pintarEntreno(d.entrenoHoy.entreno, null, d.entrenoHoy.estado === 'enviado' ? 'Entreno de hoy' : 'Generado hoy');
+      marcarEnviadoUI(d.entrenoHoy.estado === 'enviado');
+    }
+  }).catch(function(){
+    $('conexion').textContent = 'Sin conexión';
+    msg('No llego al backend. Revisa la URL en Ajustes y tu conexión.');
+  });
+}
+
+(function(){
+  var dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  var h=new Date();
+  $('fechaHoy').textContent = dias[h.getDay()] + ' ' + h.getDate() + ' ' + meses[h.getMonth()];
+})();
+
+/* ---------- generar ---------- */
+function datosBienestar(){
+  return {
+    hrv: parseFloat($('hrv').value) || null,
+    sueno_h: parseFloat($('sueno').value) || null,
+    fc_reposo: parseFloat($('fcr').value) || null,
+    motivacion: parseInt($('sMot').value,10),
+    fatiga_mental: parseInt($('sMen').value,10),
+    fatiga_fisica: parseInt($('sFis').value,10),
+    comentario: $('coment').value.trim()
+  };
+}
+function generar(variarDe){
+  if (sinConfig()){ abrirAjustes(); msg('Configura primero la URL y el token.'); return; }
+  var btn = variarDe ? $('btnOtra') : $('btnGenerar');
+  var prev = btn.textContent;
+  btn.disabled = true; btn.textContent = autoEnviar ? 'Pensando y enviando…' : 'Pensando…';
+  $('errorGen').classList.remove('visible');
+  var cuerpo = Object.assign(datosBienestar(), {
+    tipo: valorChips('chipsTipo') || 'auto',
+    objetivo: valorChips('chipsObj') || 'potencia',
+    duracion_min: durAutoOn ? null : parseInt($('sDur').value,10),
+    variar_de: variarDe || null,
+    enviar: autoEnviar
+  });
+  post('generar', cuerpo).then(function(d){
+    btn.disabled = false; btn.textContent = prev;
+    if (!d.ok){
+      $('errorGen').textContent = d.mensaje || 'No he podido generar el entreno.';
+      $('errorGen').classList.add('visible');
+      return;
+    }
+    estado.ftp = d.ftp || estado.ftp; estado.lthr = d.lthr || estado.lthr;
+    pintarReadiness(d.readiness); pintarForma(d.forma);
+    pintarEntreno(d.entreno, d.aviso, 'Entreno de hoy');
+    if (autoEnviar){
+      marcarEnviadoUI(!!d.envio_ok);
+      msg(d.envio_msg || (d.envio_ok ? 'En tu Garmin.' : 'Generado, pero no se ha podido enviar.'));
+    }
+    $('resultado').scrollIntoView({ behavior:'smooth', block:'start' });
+  }).catch(function(){
+    btn.disabled = false; btn.textContent = prev;
+    $('errorGen').textContent = 'Se ha cortado la conexión a mitad. Vuelve a intentarlo.';
+    $('errorGen').classList.add('visible');
+  });
+}
+$('btnGenerar').addEventListener('click', function(){ generar(null); });
+$('btnOtra').addEventListener('click', function(){ generar(estado.entreno ? estado.entreno.nombre : null); });
+
+/* ---------- pintar entreno ---------- */
+function marcarEnviadoUI(ok){
+  var b = $('badge');
+  b.classList.toggle('ok', !!ok);
+  b.textContent = ok ? '✓ En tu Garmin' : 'Sin enviar';
+  $('btnGarmin').textContent = ok ? 'Actualizar en Garmin' : 'Enviar al Garmin';
+}
+function pasosVisuales(entreno){
+  var out = [];
+  (entreno.bloques||[]).forEach(function(b){
+    var reps = Math.max(1, Math.round(b.repeticiones||1));
+    for (var r=0; r<reps; r++){
+      (b.pasos||[]).forEach(function(p){
+        var fc = p.objetivo === 'fc';
+        var low = Math.round(fc ? p.fc_low : p.ftp_low);
+        var high = Math.round(fc ? (p.fc_high===undefined?p.fc_low:p.fc_high) : (p.ftp_high===undefined?p.ftp_low:p.ftp_high));
+        if (p.rampa && high>low && p.seg>=90){
+          var t = Math.round(p.seg/3), span = high-low;
+          for (var i=0;i<3;i++) out.push({ seg: i===2? p.seg-2*t : t, pct: Math.round(low + span*((i+1)/3)), fc: fc });
+        } else {
+          out.push({ seg:p.seg, pct: high, fc: fc });
+        }
+      });
+    }
+  });
+  return out;
+}
+function totalSeg(entreno){
+  var t=0;
+  (entreno.bloques||[]).forEach(function(b){
+    var reps=Math.max(1,Math.round(b.repeticiones||1)), s=0;
+    (b.pasos||[]).forEach(function(p){ s += p.seg||0; });
+    t += s*reps;
+  });
+  return t;
+}
+function textoPaso(p){
+  var fc = p.objetivo === 'fc';
+  var low = Math.round(fc ? p.fc_low : p.ftp_low);
+  var high = Math.round(fc ? (p.fc_high===undefined?p.fc_low:p.fc_high) : (p.ftp_high===undefined?p.ftp_low:p.ftp_high));
+  var rango = (high>low ? low+'–'+high : low) + (fc ? '% umbral' : '%');
+  return fmtSeg(p.seg) + (p.rampa && high>low ? ' rampa ' : ' · ') + rango + (p.cue ? ' · ' + p.cue : '');
+}
+function equivalencias(p){
+  var fc = p.objetivo === 'fc';
+  var low = Math.round(fc ? p.fc_low : p.ftp_low);
+  var high = Math.round(fc ? (p.fc_high===undefined?p.fc_low:p.fc_high) : (p.ftp_high===undefined?p.ftp_low:p.ftp_high));
+  if (fc){
+    if (!estado.lthr) return { prin: low+'–'+high+'%', sec: '' };
+    var b1 = Math.round(estado.lthr*low/100), b2 = Math.round(estado.lthr*high/100);
+    var w1 = Math.round(estado.ftp*fc2w(low)/100), w2 = Math.round(estado.ftp*fc2w(high)/100);
+    return { prin: (b2>b1? b1+'–'+b2 : b1) + ' ppm', sec: '~' + (w2>w1? w1+'–'+w2 : w1) + ' W' };
+  }
+  var wl = Math.round(estado.ftp*low/100), wh = Math.round(estado.ftp*high/100);
+  var sec = '';
+  if (estado.lthr && high <= 115){
+    var f1 = Math.round(estado.lthr*w2fc(low)/100), f2 = Math.round(estado.lthr*w2fc(high)/100);
+    sec = '~' + (f2>f1? f1+'–'+f2 : f1) + ' ppm';
+  }
+  return { prin: (wh>wl? wl+'–'+wh : wl) + ' W', sec: sec };
+}
+function pintarPerfil(contId, entreno){
+  var perfil = $(contId); perfil.innerHTML = '';
+  pasosVisuales(entreno).forEach(function(p){
+    var div = document.createElement('div');
+    div.style.flex = String(Math.max(p.seg, 15));
+    div.style.height = (p.fc ? alturaFC(p.pct) : alturaPot(p.pct)) + '%';
+    div.style.background = p.fc ? colorFC(p.pct) : colorPot(p.pct);
+    perfil.appendChild(div);
+  });
+}
+function pintarEntreno(entreno, aviso, etiqueta){
+  estado.entreno = entreno;
+  marcarEnviadoUI(false);
+  $('etiquetaRes').textContent = etiqueta || 'Entreno de hoy';
+  $('entNombre').textContent = entreno.nombre || 'Entreno';
+
+  var pills = $('entPills'); pills.innerHTML = '';
+  [fmtL(totalSeg(entreno)), (entreno.carga_estimada || '~') + ' TSS', 'FTP ' + estado.ftp + ' W'].concat(estado.lthr ? ['Umbral ' + estado.lthr + ' ppm'] : []).forEach(function(t){
+    var s = document.createElement('span'); s.className = 'pill'; s.textContent = t; pills.appendChild(s);
+  });
+
+  $('entAjuste').textContent = entreno.ajuste_por_estado || '';
+  $('entResumen').textContent = entreno.resumen || '';
+  pintarPerfil('perfil', entreno);
+
+  var cont = $('entBloques'); cont.innerHTML = '';
+  (entreno.bloques||[]).forEach(function(b){
+    var reps = Math.max(1, Math.round(b.repeticiones||1));
+    var dB = document.createElement('div'); dB.className = 'bloque';
+    var h = document.createElement('h3');
+    h.textContent = (b.seccion||'Bloque') + (reps>1 ? ' · ' + reps + '×' : '');
+    dB.appendChild(h);
+    (b.pasos||[]).forEach(function(p){
+      var fila = document.createElement('div'); fila.className = 'paso';
+      var izq = document.createElement('span'); izq.textContent = textoPaso(p);
+      var eq = equivalencias(p);
+      var der = document.createElement('span'); der.className = 'eq';
+      der.innerHTML = '<b></b><small></small>';
+      der.querySelector('b').textContent = eq.prin;
+      der.querySelector('small').textContent = eq.sec;
+      fila.appendChild(izq); fila.appendChild(der); dB.appendChild(fila);
+    });
+    cont.appendChild(dB);
+  });
+
+  var av = $('entAviso');
+  if (aviso){ av.textContent = aviso; av.style.display='block'; } else { av.style.display='none'; }
+  $('editorCard').classList.remove('visible');
+  $('resultado').classList.add('visible');
+}
+
+/* ---------- enviar / actualizar en Garmin ---------- */
+$('btnGarmin').addEventListener('click', function(){
+  if (!estado.entreno){ msg('Genera un entreno primero.'); return; }
+  var b=this, prev=b.textContent; b.disabled=true; b.textContent='Enviando…';
+  post('enviar_garmin', { fecha: estado.fecha, entreno: estado.entreno }).then(function(d){
+    b.disabled=false; b.textContent=prev;
+    if (d.ok) marcarEnviadoUI(true);
+    msg(d.mensaje || (d.ok? 'Enviado.' : 'No se ha podido enviar.'));
+  }).catch(function(){
+    b.disabled=false; b.textContent=prev;
+    msg('Se ha cortado la conexión al enviar. Vuelve a intentarlo.');
+  });
+});
+
+/* ============================================================
+   EDITOR de entrenos
+   ============================================================ */
+var ed = { data: null, nombre: '', abierto: { b:null, p:null } };
+
+$('btnEditor').addEventListener('click', function(){
+  if (!estado.entreno){ msg('Genera un entreno primero.'); return; }
+  ed.data = JSON.parse(JSON.stringify(estado.entreno.bloques || []));
+  ed.nombre = estado.entreno.nombre || 'Entreno';
+  ed.abierto = { b:null, p:null };
+  $('edNombre').value = ed.nombre;
+  $('resultado').classList.remove('visible');
+  $('editorCard').classList.add('visible');
+  renderEditor();
+  $('editorCard').scrollIntoView({ behavior:'smooth', block:'start' });
+});
+function cerrarEditor(){
+  $('editorCard').classList.remove('visible');
+  $('resultado').classList.add('visible');
+}
+$('edCerrar').addEventListener('click', cerrarEditor);
+$('edCancelar').addEventListener('click', cerrarEditor);
+
+function edPasoNorm(p){
+  if (p.objetivo !== 'fc') p.objetivo = 'potencia';
+  if (p.objetivo === 'fc'){
+    if (p.fc_low === undefined) p.fc_low = 75;
+    if (p.fc_high === undefined) p.fc_high = p.fc_low;
+  } else {
+    if (p.ftp_low === undefined) p.ftp_low = 60;
+    if (p.ftp_high === undefined) p.ftp_high = p.ftp_low;
+  }
+  return p;
+}
+function edTotales(){
+  var seg=0, carga=0;
+  ed.data.forEach(function(b){
+    var reps = Math.max(1, Math.round(b.repeticiones||1));
+    (b.pasos||[]).forEach(function(p){
+      edPasoNorm(p);
+      var mid = p.objetivo==='fc' ? fc2w((p.fc_low+p.fc_high)/2)/100 : (p.ftp_low+p.ftp_high)/200;
+      seg += p.seg*reps; carga += p.seg*reps*mid*mid;
+    });
+  });
+  $('edDur').textContent = fmtL(seg);
+  $('edTss').textContent = Math.round(carga/36) + ' TSS';
+}
+function stepper(texto, onMenos, onMas){
+  var w = document.createElement('span'); w.className = 'stp';
+  var m = document.createElement('button'); m.textContent='−'; m.setAttribute('aria-label','Reducir');
+  var v = document.createElement('span'); v.textContent = texto;
+  var p = document.createElement('button'); p.textContent='+'; p.setAttribute('aria-label','Aumentar');
+  m.addEventListener('click', function(e){ e.stopPropagation(); onMenos(); renderEditor(); });
+  p.addEventListener('click', function(e){ e.stopPropagation(); onMas(); renderEditor(); });
+  w.appendChild(m); w.appendChild(v); w.appendChild(p);
+  return w;
+}
+function renderEditor(){
+  edTotales();
+  pintarPerfil('edPerfil', { bloques: ed.data });
+  var cont = $('edBloques'); cont.innerHTML = '';
+  ed.data.forEach(function(b, bi){
+    b.repeticiones = Math.max(1, Math.round(b.repeticiones||1));
+    var crd = document.createElement('div'); crd.className = 'panel'; crd.style.marginBottom = '10px'; crd.style.cursor='default';
+    var cab = document.createElement('div'); cab.className = 'eCab';
+    var inp = document.createElement('input'); inp.type='text'; inp.value = b.seccion || 'Bloque';
+    inp.style.cssText = 'flex:1;min-width:0;font-weight:700';
+    inp.setAttribute('aria-label','Nombre del bloque');
+    inp.addEventListener('change', function(){ b.seccion = this.value; });
+    cab.appendChild(inp);
+    cab.appendChild(stepper(b.repeticiones + '×',
+      function(){ b.repeticiones = Math.max(1, b.repeticiones-1); },
+      function(){ b.repeticiones = Math.min(20, b.repeticiones+1); }));
+    if (ed.data.length > 1){
+      var del = document.createElement('button'); del.className='icoBtn'; del.textContent='🗑'; del.style.fontSize='15px';
+      del.setAttribute('aria-label','Eliminar bloque');
+      del.addEventListener('click', function(){ ed.data.splice(bi,1); ed.abierto={b:null,p:null}; renderEditor(); });
+      cab.appendChild(del);
+    }
+    crd.appendChild(cab);
+
+    (b.pasos||[]).forEach(function(p, pi){
+      edPasoNorm(p);
+      var fila = document.createElement('div'); fila.className = 'epaso';
+      var c1 = document.createElement('div'); c1.className = 'epasoCab';
+      var eq = equivalencias(p);
+      c1.innerHTML = '<span></span><span style="color:var(--gris);font-size:12px"></span>';
+      c1.children[0].textContent = textoPaso(p);
+      c1.children[1].textContent = eq.prin + ' ⌄';
+      fila.appendChild(c1);
+      fila.addEventListener('click', function(){
+        ed.abierto = (ed.abierto.b===bi && ed.abierto.p===pi) ? {b:null,p:null} : {b:bi,p:pi};
+        renderEditor();
+      });
+
+      if (ed.abierto.b===bi && ed.abierto.p===pi){
+        var pan = document.createElement('div'); pan.className = 'panel';
+        pan.addEventListener('click', function(e){ e.stopPropagation(); });
+
+        var f0 = document.createElement('div'); f0.className='fila';
+        f0.innerHTML = '<span class="lbl">Objetivo</span>';
+        var tg = document.createElement('span'); tg.className='tgl2';
+        var bp = document.createElement('button'); bp.textContent='Potencia'; bp.className = p.objetivo!=='fc' ? 'on':'';
+        var bf = document.createElement('button'); bf.textContent='FC'; bf.className = p.objetivo==='fc' ? 'on':'';
+        bp.addEventListener('click', function(){
+          if (p.objetivo==='fc'){
+            p.objetivo='potencia';
+            p.ftp_low = fc2w(p.fc_low); p.ftp_high = Math.max(p.ftp_low, fc2w(p.fc_high));
+          }
+          renderEditor();
+        });
+        bf.addEventListener('click', function(){
+          if (p.objetivo!=='fc'){
+            if (!estado.lthr){ msg('Para objetivos de FC necesito tu FC umbral (Ajustes o intervals.icu).'); return; }
+            p.objetivo='fc';
+            p.fc_low = w2fc(p.ftp_low); p.fc_high = Math.max(p.fc_low, w2fc(p.ftp_high));
+          }
+          renderEditor();
+        });
+        tg.appendChild(bp); tg.appendChild(bf); f0.appendChild(tg); pan.appendChild(f0);
+
+        var f1 = document.createElement('div'); f1.className='fila';
+        f1.innerHTML = '<span class="lbl">Duración</span>';
+        f1.appendChild(stepper(fmtSeg(p.seg),
+          function(){ p.seg = Math.max(15, p.seg-30); },
+          function(){ p.seg = Math.min(7200, p.seg+30); }));
+        pan.appendChild(f1);
+
+        if (p.objetivo === 'fc'){
+          var l1 = Math.round(estado.lthr*p.fc_low/100), l2 = Math.round(estado.lthr*p.fc_high/100);
+          var f2 = document.createElement('div'); f2.className='fila';
+          f2.innerHTML = '<span class="lbl">FC mín</span>';
+          f2.appendChild(stepper(l1 + ' ppm',
+            function(){ p.fc_low = Math.max(45, p.fc_low-1); },
+            function(){ p.fc_low = Math.min(p.fc_high, p.fc_low+1); }));
+          var f3 = document.createElement('div'); f3.className='fila';
+          f3.innerHTML = '<span class="lbl">FC máx</span>';
+          f3.appendChild(stepper(l2 + ' ppm',
+            function(){ p.fc_high = Math.max(p.fc_low, p.fc_high-1); },
+            function(){ p.fc_high = Math.min(120, p.fc_high+1); }));
+          pan.appendChild(f2); pan.appendChild(f3);
+        } else {
+          var f2b = document.createElement('div'); f2b.className='fila';
+          f2b.innerHTML = '<span class="lbl">Potencia mín</span>';
+          f2b.appendChild(stepper(p.ftp_low + '%',
+            function(){ p.ftp_low = Math.max(30, p.ftp_low-2); },
+            function(){ p.ftp_low = Math.min(p.ftp_high, p.ftp_low+2); }));
+          var f3b = document.createElement('div'); f3b.className='fila';
+          f3b.innerHTML = '<span class="lbl">Potencia máx</span>';
+          f3b.appendChild(stepper(p.ftp_high + '%',
+            function(){ p.ftp_high = Math.max(p.ftp_low, p.ftp_high-2); },
+            function(){ p.ftp_high = Math.min(160, p.ftp_high+2); }));
+          pan.appendChild(f2b); pan.appendChild(f3b);
+        }
+
+        var f4 = document.createElement('div'); f4.className='fila';
+        f4.innerHTML = '<span class="lbl">Rampa</span>';
+        var rb = document.createElement('button'); rb.className = 'chip mini' + (p.rampa ? ' on':''); rb.textContent = p.rampa ? 'Sí' : 'No';
+        rb.addEventListener('click', function(){ p.rampa = !p.rampa; renderEditor(); });
+        f4.appendChild(rb); pan.appendChild(f4);
+
+        var f5 = document.createElement('div'); f5.className='fila';
+        f5.innerHTML = '<span class="lbl">Aviso en pantalla</span>';
+        var cue = document.createElement('input'); cue.type='text'; cue.value = p.cue || ''; cue.style.width='140px'; cue.placeholder='ej. A tope';
+        cue.setAttribute('aria-label','Texto del intervalo');
+        cue.addEventListener('change', function(){ p.cue = this.value; });
+        f5.appendChild(cue); pan.appendChild(f5);
+
+        var f6 = document.createElement('div'); f6.className='fila';
+        var borrar = document.createElement('button'); borrar.className='linkBtn'; borrar.style.color='var(--rojo)';
+        borrar.textContent = 'Eliminar intervalo';
+        borrar.addEventListener('click', function(){
+          b.pasos.splice(pi,1);
+          if (!b.pasos.length) ed.data.splice(bi,1);
+          ed.abierto={b:null,p:null}; renderEditor();
+        });
+        f6.appendChild(borrar); pan.appendChild(f6);
+
+        fila.appendChild(pan);
+      }
+      crd.appendChild(fila);
+    });
+
+    var add = document.createElement('button'); add.className='ghost'; add.style.marginTop='9px';
+    add.textContent = '+ Añadir intervalo';
+    add.addEventListener('click', function(){
+      b.pasos = b.pasos || [];
+      b.pasos.push({ seg:240, objetivo:'potencia', ftp_low:90, ftp_high:95, rampa:false, cue:'', intensidad:'activo' });
+      ed.abierto = { b:bi, p:b.pasos.length-1 };
+      renderEditor();
+    });
+    crd.appendChild(add);
+    cont.appendChild(crd);
+  });
+}
+$('edAddBloque').addEventListener('click', function(){
+  ed.data.push({ seccion:'Bloque nuevo', repeticiones:1, pasos:[{ seg:300, objetivo:'potencia', ftp_low:60, ftp_high:70, rampa:false, cue:'', intensidad:'activo' }] });
+  ed.abierto = { b: ed.data.length-1, p: 0 };
+  renderEditor();
+});
+$('edGuardar').addEventListener('click', function(){
+  var nuevo = Object.assign({}, estado.entreno, { nombre: $('edNombre').value.trim() || 'Entreno', bloques: ed.data });
+  delete nuevo._aviso;
+  var b=this, prev=b.textContent; b.disabled=true; b.textContent='Guardando…';
+  post('guardar_edicion', { fecha: estado.fecha, entreno: nuevo, enviar: autoEnviar }).then(function(d){
+    b.disabled=false; b.textContent=prev;
+    if (!d.ok){ msg(d.mensaje || 'No he podido guardar.'); return; }
+    pintarEntreno(nuevo, null, 'Entreno de hoy (editado)');
+    marcarEnviadoUI(!!d.envio_ok);
+    msg(d.mensaje);
+  }).catch(function(){
+    b.disabled=false; b.textContent=prev;
+    msg('Se ha cortado la conexión al guardar. Vuelve a intentarlo.');
+  });
+});
+
+/* ---------- plan semanal + piloto ---------- */
+var DIAS_ORDEN = [1,2,3,4,5,6,0];
+var DIAS_NOMBRE = {1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb',0:'Dom'};
+var DUR_OPCIONES = [45,60,75,90,105,120,150,180,210,240];
+function montarPlanUI(){
+  var cont = $('planDias'); cont.innerHTML='';
+  DIAS_ORDEN.forEach(function(d){
+    var fila = document.createElement('div'); fila.className='diaPlan';
+    var b = document.createElement('b'); b.textContent = DIAS_NOMBRE[d];
+    var selT = document.createElement('select'); selT.id='planT'+d; selT.setAttribute('aria-label','Tipo '+DIAS_NOMBRE[d]);
+    [['descanso','Descanso'],['auto','Decide RODA'],['series_cortas','Series cortas'],['series_largas','Series largas'],['rodaje','Rodaje']].forEach(function(o){
+      var op=document.createElement('option'); op.value=o[0]; op.textContent=o[1]; selT.appendChild(op);
+    });
+    var selD = document.createElement('select'); selD.id='planD'+d; selD.setAttribute('aria-label','Duración '+DIAS_NOMBRE[d]);
+    DUR_OPCIONES.forEach(function(m){
+      var op=document.createElement('option'); op.value=m; op.textContent=fmtL(m*60); selD.appendChild(op);
+    });
+    selT.addEventListener('change', function(){ selD.style.visibility = this.value==='descanso' ? 'hidden':'visible'; });
+    fila.appendChild(b); fila.appendChild(selT); fila.appendChild(selD);
+    cont.appendChild(fila);
+  });
+  var selH = $('autoHora');
+  for (var h=5; h<=12; h++){
+    var op=document.createElement('option'); op.value=h; op.textContent=h+':00'; selH.appendChild(op);
+  }
+  selH.value = 8;
+}
+montarPlanUI();
+function pintarPlan(plan){
+  if (!plan) return;
+  DIAS_ORDEN.forEach(function(d){
+    var cfgDia = (plan.dias && plan.dias[String(d)]) || { tipo:'descanso' };
+    $('planT'+d).value = cfgDia.tipo || 'descanso';
+    $('planD'+d).value = cfgDia.min || 90;
+    $('planD'+d).style.visibility = (cfgDia.tipo==='descanso') ? 'hidden':'visible';
+  });
+  var a = plan.auto || {};
+  $('autoActivo').checked = !!a.activo;
+  $('autoHora').value = a.hora || 8;
+  $('autoEmail').checked = a.email !== false;
+  marcarChip('chipsObjPlan', plan.objetivo || 'potencia');
+}
+$('btnGuardarPlan').addEventListener('click', function(){
+  if (sinConfig()){ abrirAjustes(); return; }
+  var dias = {};
+  DIAS_ORDEN.forEach(function(d){
+    var tipo = $('planT'+d).value;
+    dias[String(d)] = tipo==='descanso' ? { tipo:'descanso' } : { tipo:tipo, min: parseInt($('planD'+d).value,10) };
+  });
+  var cuerpo = {
+    dias: dias,
+    objetivo: valorChips('chipsObjPlan') || 'potencia',
+    auto: { activo: $('autoActivo').checked, hora: parseInt($('autoHora').value,10), email: $('autoEmail').checked }
+  };
+  var b=this, prev=b.textContent; b.disabled=true; b.textContent='Guardando…';
+  post('plan', cuerpo).then(function(d){
+    b.disabled=false; b.textContent=prev;
+    msg(d.mensaje || (d.ok?'Plan guardado.':'No se ha podido guardar.'));
+    if (d.avisoTZ) setTimeout(function(){ msg(d.avisoTZ); }, 4800);
+  }).catch(function(){
+    b.disabled=false; b.textContent=prev;
+    msg('Se ha cortado la conexión al guardar el plan.');
+  });
+});
+$('btnPlan').addEventListener('click', function(){
+  $('planCard').classList.toggle('visible');
+  if ($('planCard').classList.contains('visible')) $('planCard').scrollIntoView({behavior:'smooth'});
+});
+
+/* ============================================================
+   Generador de archivos .FIT (validado con el SDK de Garmin)
+   ============================================================ */
+var FIT_EPOCH = 631065600;
+var CRC_TABLE = [0x0000,0xCC01,0xD801,0x1400,0xF001,0x3C00,0x2800,0xE401,0xA001,0x6C00,0x7800,0xB401,0x5000,0x9C01,0x8801,0x4400];
+function crc16(bytes, crc){
+  crc = crc||0;
+  for (var i=0;i<bytes.length;i++){
+    var byte=bytes[i], tmp=CRC_TABLE[crc&0xF];
+    crc=(crc>>4)&0x0FFF; crc=crc^tmp^CRC_TABLE[byte&0xF];
+    tmp=CRC_TABLE[crc&0xF]; crc=(crc>>4)&0x0FFF; crc=crc^tmp^CRC_TABLE[(byte>>4)&0xF];
+  }
+  return crc&0xFFFF;
+}
+function BW(){ this.bytes=[]; }
+BW.prototype.u8=function(v){ this.bytes.push(v&0xFF); };
+BW.prototype.u16=function(v){ this.u8(v); this.u8(v>>8); };
+BW.prototype.u32=function(v){ this.u8(v); this.u8(v>>8); this.u8(v>>16); this.u8(v>>24); };
+BW.prototype.str=function(s,size){
+  var enc = unescape(encodeURIComponent(s||'')).split('').map(function(c){return c.charCodeAt(0);}).slice(0,size-1);
+  for (var i=0;i<size;i++) this.u8(i<enc.length? enc[i]:0);
+};
+var FT={enum:0x00,u16:0x84,u32:0x86,str:0x07,u32z:0x8C};
+function defMsg(w, local, globalNum, fields){
+  w.u8(0x40|local); w.u8(0); w.u8(0); w.u16(globalNum); w.u8(fields.length);
+  fields.forEach(function(f){ w.u8(f[0]); w.u8(f[1]); w.u8(f[2]); });
+}
+var STR_NAME=48, STR_STEP=24;
+var INTENS={calentamiento:2, activo:0, descanso:1, enfriamiento:3};
+function aplanarFIT(entreno){
+  var pasos=[];
+  (entreno.bloques||[]).forEach(function(b){
+    var reps=Math.max(1,Math.round(b.repeticiones||1)), ini=pasos.length;
+    (b.pasos||[]).forEach(function(p){
+      var fc = p.objetivo === 'fc';
+      var seg=Math.max(5,Math.round(p.seg||60));
+      var low=Math.max(0,Math.round(fc ? p.fc_low : (p.ftp_low!==undefined?p.ftp_low:50)));
+      var high=Math.max(low,Math.round(fc ? (p.fc_high!==undefined?p.fc_high:low) : (p.ftp_high!==undefined?p.ftp_high:low)));
+      var nombre=(p.cue||b.seccion||'').toString();
+      if (p.rampa && high>low && seg>=90){
+        var t=Math.round(seg/3), span=high-low;
+        for (var i=0;i<3;i++) pasos.push({seg:i===2?seg-2*t:t, low:Math.round(low+span*(i/3)), high:Math.round(low+span*((i+1)/3)), nombre:nombre||'Rampa', intensidad:p.intensidad, fc:fc});
+      } else {
+        pasos.push({seg:seg, low:low, high:high, nombre:nombre, intensidad:p.intensidad, fc:fc});
+      }
+    });
+    if (reps>1) pasos.push({repetir:{desde:ini, veces:reps}});
+  });
+  return pasos;
+}
+function buildWorkoutFit(entreno, ftp, lthr){
+  var pasos=aplanarFIT(entreno), data=new BW();
+  defMsg(data,0,0,[[0,1,FT.enum],[1,2,FT.u16],[2,2,FT.u16],[3,4,FT.u32z],[4,4,FT.u32]]);
+  data.u8(0x00); data.u8(5); data.u16(255); data.u16(0);
+  data.u32(Math.floor(Math.random()*0xFFFFFF)+1);
+  data.u32(Math.floor(Date.now()/1000)-FIT_EPOCH);
+  defMsg(data,1,26,[[8,STR_NAME,FT.str],[4,1,FT.enum],[5,4,FT.u32z],[6,2,FT.u16]]);
+  data.u8(0x01); data.str(entreno.nombre||'Entreno RODA',STR_NAME); data.u8(2); data.u32(32); data.u16(pasos.length);
+  defMsg(data,2,27,[[254,2,FT.u16],[0,STR_STEP,FT.str],[1,1,FT.enum],[2,4,FT.u32],[3,1,FT.enum],[4,4,FT.u32],[5,4,FT.u32],[6,4,FT.u32],[7,1,FT.enum]]);
+  pasos.forEach(function(p,i){
+    data.u8(0x02); data.u16(i);
+    if (p.repetir){
+      data.str('Repetir',STR_STEP); data.u8(6); data.u32(p.repetir.desde);
+      data.u8(2); data.u32(p.repetir.veces); data.u32(0xFFFFFFFF); data.u32(0xFFFFFFFF); data.u8(0xFF);
+    } else {
+      data.str(p.nombre,STR_STEP); data.u8(0); data.u32(p.seg*1000);
+      if (p.fc){
+        if (!lthr) throw new Error('falta_lthr');
+        var b1 = Math.min(220, Math.max(60, Math.round(lthr*p.low/100)));
+        var b2 = Math.min(220, Math.max(b1, Math.round(lthr*p.high/100)));
+        data.u8(1); data.u32(0);
+        data.u32(b1+100); data.u32(b2+100);
+      } else {
+        data.u8(4); data.u32(0);
+        data.u32(Math.round(ftp*p.low/100)+1000); data.u32(Math.round(ftp*p.high/100)+1000);
+      }
+      var ik = (p.intensidad in INTENS) ? INTENS[p.intensidad] : ((p.fc ? p.high<=72 : p.high<=60) ? 1 : 0);
+      data.u8(ik);
+    }
+  });
+  var body=data.bytes;
+  var header=new BW();
+  header.u8(14); header.u8(0x10); header.u16(2194); header.u32(body.length);
+  header.str('.FIT',5); header.bytes.pop();
+  header.u16(crc16(header.bytes));
+  var all=header.bytes.concat(body);
+  var out=new BW(); all.forEach(function(b){out.u8(b);}); out.u16(crc16(all));
+  return new Uint8Array(out.bytes);
+}
+$('btnFit').addEventListener('click', function(){
+  if (!estado.entreno){ msg('Genera un entreno primero.'); return; }
+  try{
+    var fit = buildWorkoutFit(estado.entreno, estado.ftp, estado.lthr);
+    var nombre = 'RODA_' + (estado.fecha||'hoy') + '.fit';
+    var archivo = new File([fit], nombre, { type:'application/octet-stream' });
+    if (navigator.canShare && navigator.canShare({ files:[archivo] })){
+      navigator.share({ files:[archivo], title: nombre }).catch(function(){ /* cancelado */ });
+    } else {
+      var blob = new Blob([fit], { type:'application/octet-stream' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = nombre;
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 800);
+      msg('Archivo .FIT descargado. Impórtalo en Garmin Connect > Entrenamientos.');
+    }
+  }catch(e){
+    if (String(e.message).indexOf('falta_lthr') !== -1) msg('Este entreno tiene pasos de FC y no tengo tu FC umbral. Ponla en Ajustes o en intervals.icu.');
+    else msg('No he podido crear el archivo .FIT. Prueba a regenerar el entreno.');
+  }
+});
+
+/* ---------- ajustes ---------- */
+function abrirAjustes(){
+  $('ajustes').classList.add('visible');
+  $('ajUrl').value = cfg.url; $('ajToken').value = cfg.token;
+  $('ajAutoEnviar').checked = autoEnviar;
+  $('ajustes').scrollIntoView({ behavior:'smooth' });
+}
+$('btnAjustes').addEventListener('click', abrirAjustes);
+$('btnAjustes2').addEventListener('click', abrirAjustes);
+$('btnGuardarAj').addEventListener('click', function(){
+  var url = $('ajUrl').value.trim(), token = $('ajToken').value.trim();
+  if (url.indexOf('https://script.google.com') !== 0){ msg('La URL debe ser la de tu Apps Script desplegado (empieza por https://script.google.com…).'); return; }
+  if (!token){ msg('Falta el token.'); return; }
+  cfg.url = url; cfg.token = token;
+  localStorage.setItem('roda_url', url); localStorage.setItem('roda_token', token);
+  autoEnviar = $('ajAutoEnviar').checked;
+  localStorage.setItem('roda_envia', autoEnviar ? '1':'0');
+  $('btnGenerar').textContent = autoEnviar ? 'Generar y enviar al Garmin' : 'Generar entreno';
+  var cambios = {};
+  var ftpNuevo = parseInt($('ajFtp').value, 10);
+  if (ftpNuevo && ftpNuevo !== estado.ftp) cambios.ftp = ftpNuevo;
+  if ($('ajLthr').value !== '') cambios.fc_umbral = parseInt($('ajLthr').value, 10);
+  var listo = function(){ $('ajustes').classList.remove('visible'); cargarEstado(); };
+  if (Object.keys(cambios).length){
+    post('config', cambios).then(function(d){ msg(d.mensaje || 'Guardado.'); listo(); }).catch(listo);
+  } else { msg('Guardado.'); listo(); }
+});
+
+/* ---------- arranque ---------- */
+$('btnGenerar').textContent = autoEnviar ? 'Generar y enviar al Garmin' : 'Generar entreno';
+cargarEstado();
+</script>
+</body>
+</html>
