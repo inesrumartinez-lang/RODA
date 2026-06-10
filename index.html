@@ -327,6 +327,8 @@ svg.spark{width:100%;height:58px;display:block}
     <div><label for="ajFtp">FTP (W)</label><input type="number" id="ajFtp" inputmode="numeric"></div>
     <div><label for="ajLthr">FC umbral (ppm)</label><input type="number" id="ajLthr" inputmode="numeric" placeholder="auto"></div>
   </div>
+  <label class="check" style="margin-bottom:6px"><input type="checkbox" id="ajFtpAuto"> Recalcular FTP solo (usar el eFTP de intervals.icu)</label>
+  <p class="nota" id="notaFtp">Con esto activado, RODA usa el FTP estimado que intervals.icu recalcula tras cada salida. El FTP de arriba queda solo como respaldo.</p>
   <p class="nota">FC umbral en blanco = la leo de tus zonas de intervals.icu.</p>
   <label class="check" style="margin-bottom:12px"><input type="checkbox" id="ajAutoEnviar" checked> Al generar, enviar directo al Garmin (un solo toque)</label>
   <button class="cta" id="btnGuardarAj" style="padding:12px;font-size:14.5px">Guardar y conectar</button>
@@ -555,7 +557,10 @@ function cargarEstado(){
     if (!d.ok){ $('conexion').textContent='Error'; msg(d.mensaje || 'No he podido leer tu estado.'); return; }
     $('conexion').textContent = 'Conectada';
     estado.ftp = d.ftp || 200; estado.lthr = d.lthr || null; estado.fecha = d.fecha; estado.plan = d.plan || null;
-    $('ajFtp').value = estado.ftp;
+    estado.ftpAuto = !!d.ftp_auto; estado.ftpEstimado = d.ftp_estimado || null; estado.ftpFuente = d.ftp_fuente || null;
+    $('ajFtp').value = d.ftp_fijo || estado.ftp;
+    $('ajFtpAuto').checked = estado.ftpAuto;
+    pintarNotaFtp();
     if (estado.lthr) $('ajLthr').placeholder = estado.lthr + ' (intervals)';
     pintarReadiness(d.readiness);
     pintarForma(d.forma);
@@ -706,7 +711,7 @@ function pintarEntreno(entreno, aviso, etiqueta){
   $('entNombre').textContent = entreno.nombre || 'Entreno';
 
   var pills = $('entPills'); pills.innerHTML = '';
-  [fmtL(totalSeg(entreno)), (entreno.carga_estimada || '~') + ' TSS', 'FTP ' + estado.ftp + ' W'].concat(estado.lthr ? ['Umbral ' + estado.lthr + ' ppm'] : []).forEach(function(t){
+  [fmtL(totalSeg(entreno)), (entreno.carga_estimada || '~') + ' TSS', 'FTP ' + estado.ftp + ' W' + (estado.ftpFuente === 'eftp' ? ' (auto)' : '')].concat(estado.lthr ? ['Umbral ' + estado.lthr + ' ppm'] : []).forEach(function(t){
     var s = document.createElement('span'); s.className = 'pill'; s.textContent = t; pills.appendChild(s);
   });
 
@@ -1155,8 +1160,19 @@ function abrirAjustes(){
   $('ajustes').classList.add('visible');
   $('ajUrl').value = cfg.url; $('ajToken').value = cfg.token;
   $('ajAutoEnviar').checked = autoEnviar;
+  pintarNotaFtp();
   $('ajustes').scrollIntoView({ behavior:'smooth' });
 }
+function pintarNotaFtp(){
+  var n = $('notaFtp');
+  if ($('ajFtpAuto').checked){
+    if (estado.ftpEstimado) n.textContent = 'Activado. RODA usa tu eFTP actual de intervals.icu (' + estado.ftpEstimado + ' W), que se recalcula tras cada salida. El FTP de arriba queda como respaldo.';
+    else n.textContent = 'Activado. Aún no hay eFTP estimado en intervals.icu (necesita algún esfuerzo máximo reciente); mientras tanto uso el FTP de arriba.';
+  } else {
+    n.textContent = 'RODA usa el FTP fijo de arriba. Actívalo para que se recalcule solo con el eFTP de intervals.icu.';
+  }
+}
+$('ajFtpAuto').addEventListener('change', pintarNotaFtp);
 $('btnAjustes').addEventListener('click', abrirAjustes);
 $('btnAjustes2').addEventListener('click', abrirAjustes);
 $('btnGuardarAj').addEventListener('click', function(){
@@ -1168,14 +1184,12 @@ $('btnGuardarAj').addEventListener('click', function(){
   autoEnviar = $('ajAutoEnviar').checked;
   localStorage.setItem('roda_envia', autoEnviar ? '1':'0');
   $('btnGenerar').textContent = autoEnviar ? 'Generar y enviar al Garmin' : 'Generar entreno';
-  var cambios = {};
+  var cambios = { ftp_auto: $('ajFtpAuto').checked };
   var ftpNuevo = parseInt($('ajFtp').value, 10);
-  if (ftpNuevo && ftpNuevo !== estado.ftp) cambios.ftp = ftpNuevo;
+  if (ftpNuevo && ftpNuevo !== (estado.ftpFijo || estado.ftp)) cambios.ftp = ftpNuevo;
   if ($('ajLthr').value !== '') cambios.fc_umbral = parseInt($('ajLthr').value, 10);
   var listo = function(){ $('ajustes').classList.remove('visible'); cargarEstado(); };
-  if (Object.keys(cambios).length){
-    post('config', cambios).then(function(d){ msg(d.mensaje || 'Guardado.'); listo(); }).catch(listo);
-  } else { msg('Guardado.'); listo(); }
+  post('config', cambios).then(function(d){ msg(d.mensaje || 'Guardado.'); listo(); }).catch(listo);
 });
 
 /* ---------- arranque ---------- */
