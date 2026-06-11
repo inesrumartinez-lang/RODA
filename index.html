@@ -61,6 +61,11 @@ header .dcha{display:flex;align-items:center;gap:12px}
 .propOp .meta{font-size:12px;color:var(--gris);margin-bottom:8px}
 .propOp .perfil{height:40px;margin:0}
 .propOp.eligiendo{opacity:.55;pointer-events:none}
+.grafCard{background:var(--panel);border-radius:14px;padding:10px 12px;margin-bottom:9px}
+.grafCab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.grafCab span{font-size:11.5px;color:var(--gris)}
+.grafCab b{font-family:'Sora',sans-serif;font-size:15px;font-weight:600}
+.grafCab b small{font-size:9.5px;color:var(--gris);font-weight:400;margin-left:5px;font-family:'Manrope',sans-serif}
 .lbl{font-size:12px;color:var(--gris);letter-spacing:.02em;margin-bottom:10px}
 .linkBtn{background:none;border:none;font:inherit;font-size:13px;color:var(--rosaclaro);cursor:pointer;padding:2px}
 
@@ -182,7 +187,6 @@ svg.spark{width:100%;height:58px;display:block}
   <h1>RODA</h1>
   <div class="dcha">
     <span class="fecha" id="fechaHoy">—</span>
-    <button class="icoBtn" id="btnAjustes" aria-label="Ajustes">⚙</button>
   </div>
 </header>
 
@@ -375,10 +379,16 @@ svg.spark{width:100%;height:58px;display:block}
 <!-- Graficador de métricas -->
 <section class="crd">
   <div class="lbl">Tus métricas en el tiempo</div>
-  <div class="chipsScroll" id="histMet"></div>
-  <div class="grid4" id="histRango" style="grid-template-columns:repeat(4,1fr);margin:10px 0 12px"></div>
-  <svg id="histGraf" viewBox="0 0 300 130" preserveAspectRatio="none" style="width:100%;display:block;height:150px"></svg>
-  <p class="nota" id="histGrafNota" style="margin-top:8px"></p>
+  <div class="grid4" id="histRango" style="grid-template-columns:repeat(4,1fr);margin:0 0 12px"></div>
+  <div id="grafPrincipales"></div>
+  <button class="linkBtn" id="btnMasMet" style="display:block;margin:4px auto 0">Más métricas ⌄</button>
+  <div id="masMetWrap" style="display:none;margin-top:10px">
+    <div class="chipsScroll" id="histMet" style="margin-bottom:10px"></div>
+    <div class="grafCard">
+      <div class="grafCab"><span id="extraNombre">—</span><b id="extraValor">—</b></div>
+      <svg id="histGraf" viewBox="0 0 300 70" preserveAspectRatio="none" style="width:100%;display:block;height:84px"></svg>
+    </div>
+  </div>
 </section>
 </div>
 
@@ -576,11 +586,14 @@ document.querySelector('.tabs').addEventListener('click', function(e){
 });
 
 /* ---------- histórico ---------- */
-var hist = { cargado:false, bien:[], acts:[], inter:{}, met:'hrv', rango:31 };
+var hist = { cargado:false, bien:[], acts:[], inter:{}, met:'fc_reposo', rango:31 };
+var GRAF_PRINCIPALES = [
+  ['hrv','HRV','ms',null], ['sueno_h','Sueño','h',null],
+  ['fatiga_fisica','Fatiga física','',[1,5]], ['fatiga_mental','Fatiga mental','',[1,5]]
+];
 var HIST_METS = [
-  ['hrv','HRV','ms'], ['fc_reposo','FC reposo','ppm'], ['sueno_h','Sueño','h'],
-  ['resp_min','Respiración','rpm'], ['temp_munyeca','Temperatura','°'], ['peso','Peso','kg'],
-  ['fatiga_fisica','Fatiga física',''], ['fatiga_mental','Fatiga mental',''], ['motivacion','Motivación','']
+  ['fc_reposo','FC reposo','ppm',null], ['resp_min','Respiración','rpm',null],
+  ['temp_munyeca','Temperatura','°',null], ['motivacion','Motivación','',[1,5]]
 ];
 var HIST_RANGOS = [['7D',7],['1M',31],['3M',92],['6M',184]];
 
@@ -593,7 +606,7 @@ var HIST_RANGOS = [['7D',7],['1M',31],['3M',92],['6M',184]];
   m.addEventListener('click', function(e){
     var b = e.target.closest('.chip'); if (!b) return;
     m.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('on'); });
-    b.classList.add('on'); hist.met = b.dataset.v; pintarHistGraf();
+    b.classList.add('on'); hist.met = b.dataset.v; pintarGrafExtra();
   });
   var r = $('histRango');
   HIST_RANGOS.forEach(function(d,i){
@@ -603,9 +616,85 @@ var HIST_RANGOS = [['7D',7],['1M',31],['3M',92],['6M',184]];
   r.addEventListener('click', function(e){
     var b = e.target.closest('.chip'); if (!b) return;
     r.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('on'); });
-    b.classList.add('on'); hist.rango = parseInt(b.dataset.v,10); pintarHistGraf();
+    b.classList.add('on'); hist.rango = parseInt(b.dataset.v,10);
+    pintarGrafPrincipales(); pintarGrafExtra();
+  });
+  $('btnMasMet').addEventListener('click', function(){
+    var w = $('masMetWrap');
+    var abierto = w.style.display !== 'none';
+    w.style.display = abierto ? 'none' : 'block';
+    this.textContent = abierto ? 'Más métricas ⌄' : 'Menos métricas ⌃';
+    if (!abierto) pintarGrafExtra();
   });
 })();
+
+function serieDe(campo){
+  var limite = new Date(); limite.setDate(limite.getDate()-hist.rango);
+  return hist.bien.filter(function(b){
+    return b[campo] !== null && b[campo] !== undefined && new Date(b.fecha+'T12:00:00') >= limite;
+  }).map(function(b){ return { f:b.fecha, v:Number(b[campo]) }; });
+}
+function grafSerie(svg, campo, dominio){
+  svg.innerHTML = '';
+  var pts = serieDe(campo);
+  if (pts.length < 2){
+    svg.innerHTML = '<text x="150" y="40" text-anchor="middle" fill="#5C6573" style="font-size:11px">Pocos datos aún en este rango</text>';
+    return null;
+  }
+  var vals = pts.map(function(p){ return p.v; });
+  var min, max;
+  if (dominio){ min = dominio[0]; max = dominio[1]; }
+  else {
+    min = Math.min.apply(null,vals); max = Math.max.apply(null,vals);
+    if (max-min < 0.6){ max += 0.5; min -= 0.5; }
+    var margen = (max-min)*0.12; min -= margen; max += margen;
+  }
+  var W=300,H=70,pl=5,pr=5,pt=6,pb=6;
+  function x(i){ return pl + i*(W-pl-pr)/(pts.length-1); }
+  function y(v){ return H-pb - (Math.min(max,Math.max(min,v))-min)*(H-pt-pb)/(max-min); }
+  var linea = pts.map(function(p,i){ return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.v).toFixed(1); }).join(' ');
+  var area = linea + ' L'+x(pts.length-1).toFixed(1)+' '+(H-pb)+' L'+pl+' '+(H-pb)+' Z';
+  svg.innerHTML =
+    '<path d="'+area+'" fill="#FF5C8A" opacity="0.12"/>' +
+    '<path d="'+linea+'" fill="none" stroke="#FF5C8A" stroke-width="2"/>' +
+    '<circle cx="'+x(pts.length-1).toFixed(1)+'" cy="'+y(pts[pts.length-1].v).toFixed(1)+'" r="3" fill="#FF8FAF"/>';
+  var media = vals.reduce(function(a,b){return a+b;},0)/vals.length;
+  return { ultimo: Math.round(pts[pts.length-1].v*10)/10, media: Math.round(media*10)/10 };
+}
+function pintarGrafPrincipales(){
+  var cont = $('grafPrincipales'); cont.innerHTML = '';
+  GRAF_PRINCIPALES.forEach(function(d){
+    var card = document.createElement('div'); card.className = 'grafCard';
+    var cab = document.createElement('div'); cab.className = 'grafCab';
+    cab.innerHTML = '<span></span><b>—</b>';
+    cab.querySelector('span').textContent = d[1];
+    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','0 0 300 70');
+    svg.setAttribute('preserveAspectRatio','none');
+    svg.style.cssText = 'width:100%;display:block;height:78px';
+    card.appendChild(cab); card.appendChild(svg);
+    cont.appendChild(card);
+    var r = grafSerie(svg, d[0], d[3]);
+    if (r){
+      var b = cab.querySelector('b');
+      b.textContent = r.ultimo + (d[2] ? ' '+d[2] : '');
+      var s = document.createElement('small'); s.textContent = 'media '+r.media;
+      b.appendChild(s);
+    }
+  });
+}
+function pintarGrafExtra(){
+  var def = HIST_METS.filter(function(d){ return d[0]===hist.met; })[0];
+  if (!def) return;
+  $('extraNombre').textContent = def[1];
+  var r = grafSerie($('histGraf'), def[0], def[3]);
+  var b = $('extraValor');
+  if (r){
+    b.textContent = r.ultimo + (def[2] ? ' '+def[2] : '');
+    var s = document.createElement('small'); s.textContent = 'media '+r.media;
+    b.appendChild(s);
+  } else b.textContent = '—';
+}
 
 function cargarHistorial(){
   if (sinConfig()) return;
@@ -616,7 +705,8 @@ function cargarHistorial(){
     hist.bien = d.bienestar || [];
     hist.acts = d.actividades || [];
     pintarHistEntrenos();
-    pintarHistGraf();
+    pintarGrafPrincipales();
+    pintarGrafExtra();
   }).catch(function(){
     $('histEntrenos').textContent = 'Sin conexión al cargar el historial. Vuelve a entrar en la pestaña.';
   });
@@ -675,33 +765,6 @@ function renderIntervalos(lista, cont){
   });
 }
 
-function pintarHistGraf(){
-  var svg = $('histGraf'); svg.innerHTML='';
-  var def = HIST_METS.filter(function(d){ return d[0]===hist.met; })[0];
-  var limite = new Date(); limite.setDate(limite.getDate()-hist.rango);
-  var pts = hist.bien.filter(function(b){
-    return b[hist.met] !== null && b[hist.met] !== undefined && new Date(b.fecha+'T12:00:00') >= limite;
-  }).map(function(b){ return { f:b.fecha, v:Number(b[hist.met]) }; });
-  var nota = $('histGrafNota');
-  if (pts.length < 2){ nota.textContent = 'Aún no hay suficientes datos de ' + def[1].toLowerCase() + ' en este rango.'; return; }
-  var vals = pts.map(function(p){ return p.v; });
-  var min = Math.min.apply(null,vals), max = Math.max.apply(null,vals);
-  if (max-min < 0.6){ max+=0.5; min-=0.5; }
-  var W=300,H=130,pl=8,pr=8,pt=18,pb=14;
-  function x(i){ return pl + i*(W-pl-pr)/(pts.length-1); }
-  function y(v){ return H-pb - (v-min)*(H-pt-pb)/(max-min); }
-  var linea = pts.map(function(p,i){ return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.v).toFixed(1); }).join(' ');
-  var area = linea + ' L'+x(pts.length-1).toFixed(1)+' '+(H-pb)+' L'+pl+' '+(H-pb)+' Z';
-  svg.innerHTML =
-    '<path d="'+area+'" fill="#FF5C8A" opacity="0.12"/>' +
-    '<path d="'+linea+'" fill="none" stroke="#FF5C8A" stroke-width="2"/>' +
-    '<circle cx="'+x(pts.length-1).toFixed(1)+'" cy="'+y(pts[pts.length-1].v).toFixed(1)+'" r="3.4" fill="#FF8FAF"/>' +
-    '<text x="'+(W-pr)+'" y="12" text-anchor="end" fill="#E8EBF0" style="font-family:Sora,sans-serif;font-size:12px;font-weight:600">'+pts[pts.length-1].v+(def[2]?' '+def[2]:'')+'</text>' +
-    '<text x="'+pl+'" y="12" fill="#8A93A0" style="font-size:9.5px">máx '+max.toFixed(1).replace('.0','')+' · mín '+min.toFixed(1).replace('.0','')+'</text>';
-  var media = vals.reduce(function(a,b){return a+b;},0)/vals.length;
-  nota.textContent = def[1] + ' · ' + pts.length + ' días con dato · media ' + (Math.round(media*10)/10) + (def[2]?' '+def[2]:'');
-}
-
 verTab(localStorage.getItem('roda_tab') || 'Hoy');
 
 
@@ -751,8 +814,7 @@ function pintarMetricas(hoy){
     ['temp_munyeca', 'Temp. muñeca', '°', 1],
     ['spo2', 'SpO2', '%', 0],
     ['pasos', 'Pasos', '', 0],
-    ['kcal_activas', 'Kcal activas', '', 0],
-    ['peso', 'Peso', 'kg', 1]
+    ['kcal_activas', 'Kcal activas', '', 0]
   ];
   grid.innerHTML = '';
   var n = 0;
@@ -1584,7 +1646,6 @@ function pintarNotaFtp(){
   }
 }
 $('ajFtpAuto').addEventListener('change', pintarNotaFtp);
-$('btnAjustes').addEventListener('click', abrirAjustes);
 $('btnAjustes2').addEventListener('click', abrirAjustes);
 $('btnGuardarAj').addEventListener('click', function(){
   var url = $('ajUrl').value.trim(), token = $('ajToken').value.trim();
