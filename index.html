@@ -42,6 +42,17 @@ header .dcha{display:flex;align-items:center;gap:12px}
 .tabs .tab.on{background:var(--blancoz);border-color:var(--blancoz);color:var(--fondo)}
 .tab-sec{display:none}
 .tab-sec.visible{display:block}
+.chipsScroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.chipsScroll .chip{flex:none;padding:7px 13px;font-size:12px}
+.actFila{padding:10px 0;border-bottom:1px dashed var(--borde);cursor:pointer}
+.actFila:last-child{border-bottom:none}
+.actCab{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.actCab b{font-size:13.5px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.actCab span{font-size:11.5px;color:var(--gris);flex:none}
+.actMet{font-size:12px;color:#C7CDD6;margin-top:2px}
+.actInter{margin-top:8px;background:var(--panel);border:1px solid var(--borde);border-radius:10px;padding:8px 10px}
+.actInter div{display:flex;justify-content:space-between;font-size:12px;color:#C7CDD6;padding:3px 0}
+.actInter div b{font-weight:600;color:var(--texto);font-variant-numeric:tabular-nums}
 .lbl{font-size:12px;color:var(--gris);letter-spacing:.02em;margin-bottom:10px}
 .linkBtn{background:none;border:none;font:inherit;font-size:13px;color:var(--rosaclaro);cursor:pointer;padding:2px}
 
@@ -170,6 +181,7 @@ svg.spark{width:100%;height:58px;display:block}
   <button class="tab on" data-tab="Hoy">Hoy</button>
   <button class="tab" data-tab="Entreno">Entreno</button>
   <button class="tab" data-tab="Forma">Forma</button>
+  <button class="tab" data-tab="Historico">Histórico</button>
 </nav>
 
 <div class="tab-sec visible" id="tabHoy">
@@ -329,6 +341,23 @@ svg.spark{width:100%;height:58px;display:block}
   <div class="lbl">Esfuerzo semanal</div>
   <svg id="esfuerzo" viewBox="0 0 300 110" preserveAspectRatio="xMidYMid meet" style="width:100%;display:block" aria-label="Esfuerzo de las últimas 6 semanas"></svg>
   <p class="nota" style="margin-top:8px">Suma semanal de esfuerzo por frecuencia cardíaca (TRIMP), lo mismo que mide el Esfuerzo Relativo de Strava.</p>
+</section>
+</div>
+
+<div class="tab-sec" id="tabHistorico">
+<!-- Entrenos completados -->
+<section class="crd">
+  <div class="lbl">Entrenos de los últimos 7 días</div>
+  <div id="histEntrenos" class="nota">Toca la pestaña para cargar…</div>
+</section>
+
+<!-- Graficador de métricas -->
+<section class="crd">
+  <div class="lbl">Tus métricas en el tiempo</div>
+  <div class="chipsScroll" id="histMet"></div>
+  <div class="grid4" id="histRango" style="grid-template-columns:repeat(4,1fr);margin:10px 0 12px"></div>
+  <svg id="histGraf" viewBox="0 0 300 130" preserveAspectRatio="none" style="width:100%;display:block;height:150px"></svg>
+  <p class="nota" id="histGrafNota" style="margin-top:8px"></p>
 </section>
 </div>
 
@@ -512,18 +541,148 @@ function lineaHoy(){
 
 /* ---------- pestañas ---------- */
 function verTab(nombre){
-  ['Hoy','Entreno','Forma'].forEach(function(t){
+  ['Hoy','Entreno','Forma','Historico'].forEach(function(t){
     $('tab'+t).classList.toggle('visible', t===nombre);
   });
   document.querySelectorAll('.tabs .tab').forEach(function(b){
     b.classList.toggle('on', b.dataset.tab===nombre);
   });
   localStorage.setItem('roda_tab', nombre);
+  if (nombre==='Historico' && !hist.cargado) cargarHistorial();
 }
 document.querySelector('.tabs').addEventListener('click', function(e){
   var b = e.target.closest('.tab'); if (b) verTab(b.dataset.tab);
 });
+
+/* ---------- histórico ---------- */
+var hist = { cargado:false, bien:[], acts:[], inter:{}, met:'hrv', rango:31 };
+var HIST_METS = [
+  ['hrv','HRV','ms'], ['fc_reposo','FC reposo','ppm'], ['sueno_h','Sueño','h'],
+  ['resp_min','Respiración','rpm'], ['temp_munyeca','Temperatura','°'], ['peso','Peso','kg'],
+  ['fatiga_fisica','Fatiga física',''], ['fatiga_mental','Fatiga mental',''], ['motivacion','Motivación','']
+];
+var HIST_RANGOS = [['7D',7],['1M',31],['3M',92],['6M',184]];
+
+(function montarHistUI(){
+  var m = $('histMet');
+  HIST_METS.forEach(function(d,i){
+    var b = document.createElement('button'); b.className = 'chip'+(i===0?' on':'');
+    b.dataset.v = d[0]; b.textContent = d[1]; m.appendChild(b);
+  });
+  m.addEventListener('click', function(e){
+    var b = e.target.closest('.chip'); if (!b) return;
+    m.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on'); hist.met = b.dataset.v; pintarHistGraf();
+  });
+  var r = $('histRango');
+  HIST_RANGOS.forEach(function(d,i){
+    var b = document.createElement('button'); b.className = 'chip mini'+(i===1?' on':'');
+    b.dataset.v = d[1]; b.textContent = d[0]; r.appendChild(b);
+  });
+  r.addEventListener('click', function(e){
+    var b = e.target.closest('.chip'); if (!b) return;
+    r.querySelectorAll('.chip').forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on'); hist.rango = parseInt(b.dataset.v,10); pintarHistGraf();
+  });
+})();
+
+function cargarHistorial(){
+  if (sinConfig()) return;
+  $('histEntrenos').textContent = 'Cargando…';
+  get({ action:'historial' }).then(function(d){
+    if (!d.ok){ $('histEntrenos').textContent = d.mensaje || 'No he podido cargar el historial.'; return; }
+    hist.cargado = true;
+    hist.bien = d.bienestar || [];
+    hist.acts = d.actividades || [];
+    pintarHistEntrenos();
+    pintarHistGraf();
+  }).catch(function(){
+    $('histEntrenos').textContent = 'Sin conexión al cargar el historial. Vuelve a entrar en la pestaña.';
+  });
+}
+
+function fechaCorta(iso){
+  var d = new Date(iso+'T12:00:00');
+  var dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  return dias[d.getDay()]+' '+d.getDate();
+}
+function pintarHistEntrenos(){
+  var cont = $('histEntrenos'); cont.innerHTML=''; cont.classList.remove('nota');
+  if (!hist.acts.length){ cont.textContent = 'Sin entrenos registrados esta semana.'; cont.classList.add('nota'); return; }
+  hist.acts.forEach(function(a){
+    var fila = document.createElement('div'); fila.className='actFila';
+    var cab = document.createElement('div'); cab.className='actCab';
+    cab.innerHTML = '<b></b><span></span>';
+    cab.querySelector('b').textContent = a.nombre || a.tipo || 'Actividad';
+    cab.querySelector('span').textContent = fechaCorta(a.fecha);
+    var met = document.createElement('div'); met.className='actMet';
+    var partes = [];
+    if (a.min) partes.push(fmtL(a.min*60));
+    if (a.carga) partes.push(a.carga+' TSS');
+    if (a.watts_media) partes.push(Math.round(a.watts_media)+' W');
+    if (a.fc_media) partes.push(Math.round(a.fc_media)+' ppm');
+    met.textContent = partes.join(' · ') + '  ⌄';
+    var inter = document.createElement('div'); inter.className='actInter'; inter.style.display='none';
+    fila.appendChild(cab); fila.appendChild(met); fila.appendChild(inter);
+    fila.addEventListener('click', function(){
+      if (inter.style.display==='none'){ inter.style.display='block'; cargarIntervalos(a.id, inter); }
+      else inter.style.display='none';
+    });
+    cont.appendChild(fila);
+  });
+}
+function cargarIntervalos(id, cont){
+  if (hist.inter[id]){ renderIntervalos(hist.inter[id], cont); return; }
+  cont.textContent = 'Cargando series…';
+  get({ action:'intervalos', id:id }).then(function(d){
+    if (!d.ok){ cont.textContent = d.mensaje || 'No he podido leer las series.'; return; }
+    hist.inter[id] = d.intervalos || [];
+    renderIntervalos(hist.inter[id], cont);
+  }).catch(function(){ cont.textContent = 'Sin conexión al pedir las series.'; });
+}
+function renderIntervalos(lista, cont){
+  cont.innerHTML='';
+  var trabajo = lista.filter(function(i){ return i.tipo!=='RECOVERY' && i.seg>=30; });
+  if (!trabajo.length){ cont.textContent = 'Sin series detectadas en esta salida (rodaje continuo).'; return; }
+  trabajo.slice(0,20).forEach(function(i,idx){
+    var f = document.createElement('div');
+    var izq = document.createElement('span');
+    izq.textContent = (i.label || ('Serie '+(idx+1))) + ' · ' + fmtSeg(i.seg);
+    var der = document.createElement('b');
+    der.textContent = [i.w? i.w+' W':null, i.fc? i.fc+' ppm':null].filter(Boolean).join(' · ') || '—';
+    f.appendChild(izq); f.appendChild(der); cont.appendChild(f);
+  });
+}
+
+function pintarHistGraf(){
+  var svg = $('histGraf'); svg.innerHTML='';
+  var def = HIST_METS.filter(function(d){ return d[0]===hist.met; })[0];
+  var limite = new Date(); limite.setDate(limite.getDate()-hist.rango);
+  var pts = hist.bien.filter(function(b){
+    return b[hist.met] !== null && b[hist.met] !== undefined && new Date(b.fecha+'T12:00:00') >= limite;
+  }).map(function(b){ return { f:b.fecha, v:Number(b[hist.met]) }; });
+  var nota = $('histGrafNota');
+  if (pts.length < 2){ nota.textContent = 'Aún no hay suficientes datos de ' + def[1].toLowerCase() + ' en este rango.'; return; }
+  var vals = pts.map(function(p){ return p.v; });
+  var min = Math.min.apply(null,vals), max = Math.max.apply(null,vals);
+  if (max-min < 0.6){ max+=0.5; min-=0.5; }
+  var W=300,H=130,pl=8,pr=8,pt=18,pb=14;
+  function x(i){ return pl + i*(W-pl-pr)/(pts.length-1); }
+  function y(v){ return H-pb - (v-min)*(H-pt-pb)/(max-min); }
+  var linea = pts.map(function(p,i){ return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.v).toFixed(1); }).join(' ');
+  var area = linea + ' L'+x(pts.length-1).toFixed(1)+' '+(H-pb)+' L'+pl+' '+(H-pb)+' Z';
+  svg.innerHTML =
+    '<path d="'+area+'" fill="#FF5C8A" opacity="0.12"/>' +
+    '<path d="'+linea+'" fill="none" stroke="#FF5C8A" stroke-width="2"/>' +
+    '<circle cx="'+x(pts.length-1).toFixed(1)+'" cy="'+y(pts[pts.length-1].v).toFixed(1)+'" r="3.4" fill="#FF8FAF"/>' +
+    '<text x="'+(W-pr)+'" y="12" text-anchor="end" fill="#E8EBF0" style="font-family:Sora,sans-serif;font-size:12px;font-weight:600">'+pts[pts.length-1].v+(def[2]?' '+def[2]:'')+'</text>' +
+    '<text x="'+pl+'" y="12" fill="#8A93A0" style="font-size:9.5px">máx '+max.toFixed(1).replace('.0','')+' · mín '+min.toFixed(1).replace('.0','')+'</text>';
+  var media = vals.reduce(function(a,b){return a+b;},0)/vals.length;
+  nota.textContent = def[1] + ' · ' + pts.length + ' días con dato · media ' + (Math.round(media*10)/10) + (def[2]?' '+def[2]:'');
+}
+
 verTab(localStorage.getItem('roda_tab') || 'Hoy');
+
 
 function pintarEsfuerzo(semanas){
   var svg = $('esfuerzo'); svg.innerHTML = '';
