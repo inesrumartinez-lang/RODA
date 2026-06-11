@@ -53,6 +53,14 @@ header .dcha{display:flex;align-items:center;gap:12px}
 .actInter{margin-top:8px;background:var(--panel);border:1px solid var(--borde);border-radius:10px;padding:8px 10px}
 .actInter div{display:flex;justify-content:space-between;font-size:12px;color:#C7CDD6;padding:3px 0}
 .actInter div b{font-weight:600;color:var(--texto);font-variant-numeric:tabular-nums}
+.propOp{background:var(--panel);border:1px solid var(--borde2);border-radius:14px;padding:12px;margin-bottom:9px;cursor:pointer}
+.propOp:last-child{margin-bottom:0}
+.propOp .et{display:inline-block;background:var(--rosa);color:#1A0810;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;margin-bottom:6px}
+.propOp.alt .et{background:var(--borde2);color:#C7CDD6}
+.propOp b{display:block;font-size:14.5px;font-weight:700;margin-bottom:2px}
+.propOp .meta{font-size:12px;color:var(--gris);margin-bottom:8px}
+.propOp .perfil{height:40px;margin:0}
+.propOp.eligiendo{opacity:.55;pointer-events:none}
 .lbl{font-size:12px;color:var(--gris);letter-spacing:.02em;margin-bottom:10px}
 .linkBtn{background:none;border:none;font:inherit;font-size:13px;color:var(--rosaclaro);cursor:pointer;padding:2px}
 
@@ -140,6 +148,7 @@ svg.spark{width:100%;height:58px;display:block}
 .stp{display:inline-flex;align-items:center;border:1px solid var(--borde2);border-radius:999px;overflow:hidden;flex:none}
 .stp button{background:var(--panel);border:none;color:var(--rosaclaro);width:32px;height:30px;font-size:17px;font-weight:700;cursor:pointer}
 .stp span{min-width:50px;text-align:center;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--texto)}
+.stp input{width:58px;min-width:0;background:none;border:none;text-align:center;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--texto);padding:0;border-radius:0}
 .epaso{border-top:1px dashed var(--borde);padding:9px 0;cursor:pointer}
 .epasoCab{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:#C7CDD6}
 .panel{background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:10px;margin-top:9px;cursor:default}
@@ -237,6 +246,17 @@ svg.spark{width:100%;height:58px;display:block}
 </div>
 
 <div class="tab-sec" id="tabEntreno">
+<!-- Propuestas del día -->
+<section class="crd" id="propCard">
+  <div style="display:flex;justify-content:space-between;align-items:baseline">
+    <span class="lbl" style="margin-bottom:10px">Propuestas de hoy</span>
+    <button class="linkBtn" id="btnOtrasProp">Otras 3 ↻</button>
+  </div>
+  <div id="propLista" class="nota" style="margin:0">Cargando…</div>
+</section>
+<button class="linkBtn" id="btnManual" style="display:block;margin:0 auto 12px">Prefiero configurarlo yo ⌄</button>
+
+<div id="manualWrap" style="display:none">
 <!-- Tu entreno -->
 <section class="crd">
   <div class="lbl">Tu entreno</div>
@@ -272,6 +292,7 @@ svg.spark{width:100%;height:58px;display:block}
 <button class="cta" id="btnGenerar">Generar y enviar al Garmin</button>
 <div class="error" id="errorGen"></div>
 <div style="height:12px"></div>
+</div>
 
 <!-- Resultado -->
 <section class="crd" id="resultado">
@@ -852,6 +873,12 @@ function cargarEstado(){
     if (d.entrenoHoy && d.entrenoHoy.entreno){
       pintarEntreno(d.entrenoHoy.entreno, null, d.entrenoHoy.estado === 'enviado' ? 'Entreno de hoy' : 'Generado hoy');
       marcarEnviadoUI(d.entrenoHoy.estado === 'enviado');
+      if (d.propuestas && d.propuestas.length) pintarPropuestas(d.propuestas);
+      else { $('propLista').className='nota'; $('propLista').textContent='Ya tienes el entreno de hoy abajo. Dale a "Otras 3" si quieres ver opciones distintas.'; }
+    } else if (d.propuestas && d.propuestas.length){
+      pintarPropuestas(d.propuestas);
+    } else {
+      pedirPropuestas(false);
     }
   }).catch(function(){
     $('conexion').textContent = 'Sin conexión';
@@ -865,6 +892,69 @@ function cargarEstado(){
   var h=new Date();
   $('fechaHoy').textContent = dias[h.getDay()] + ' ' + h.getDate() + ' ' + meses[h.getMonth()];
 })();
+
+/* ---------- propuestas del día ---------- */
+$('btnManual').addEventListener('click', function(){
+  var w = $('manualWrap');
+  var abierto = w.style.display !== 'none';
+  w.style.display = abierto ? 'none' : 'block';
+  this.textContent = abierto ? 'Prefiero configurarlo yo ⌄' : 'Ocultar configuración manual ⌃';
+});
+$('btnOtrasProp').addEventListener('click', function(){ pedirPropuestas(true); });
+
+function pedirPropuestas(variar){
+  if (sinConfig()) return;
+  var l = $('propLista');
+  l.className = 'nota'; l.style.margin = '0';
+  l.textContent = 'Preparando tus 3 propuestas según cómo llegas hoy… (20-40 s)';
+  post('propuestas', { variar: !!variar }).then(function(d){
+    if (!d.ok){
+      l.innerHTML = '';
+      var p = document.createElement('p'); p.className='nota'; p.textContent = d.mensaje || 'No he podido generar las propuestas.';
+      var b = document.createElement('button'); b.className='sec'; b.textContent='Reintentar';
+      b.addEventListener('click', function(){ pedirPropuestas(false); });
+      l.appendChild(p); l.appendChild(b);
+      return;
+    }
+    pintarPropuestas(d.opciones);
+  }).catch(function(){
+    l.textContent = 'Se ha cortado la conexión. Entra otra vez en la pestaña o dale a "Otras 3".';
+  });
+}
+function pintarPropuestas(ops){
+  estado.propuestas = ops || [];
+  var l = $('propLista');
+  l.className = ''; l.innerHTML = '';
+  if (!ops || !ops.length){ l.className='nota'; l.textContent='Sin propuestas todavía.'; return; }
+  ops.forEach(function(o, i){
+    var c = document.createElement('div');
+    c.className = 'propOp' + (i>0 ? ' alt' : '');
+    var et = document.createElement('span'); et.className='et'; et.textContent = o.etiqueta || (i===0?'Recomendado':'Alternativa');
+    var b = document.createElement('b'); b.textContent = o.nombre || 'Entreno';
+    var meta = document.createElement('div'); meta.className='meta';
+    meta.textContent = [o._min ? fmtL(o._min*60) : null, (o._tss || o.carga_estimada) ? (o._tss || o.carga_estimada)+' TSS' : null, o.tipo ? nombreTipo(o.tipo) : null].filter(Boolean).join(' · ') + '  ·  Tocar para usar';
+    var perf = document.createElement('div'); perf.className='perfil';
+    c.appendChild(et); c.appendChild(b); c.appendChild(meta); c.appendChild(perf);
+    pintarPerfil(perf, o);
+    c.addEventListener('click', function(){ elegirPropuesta(i, c); });
+    l.appendChild(c);
+  });
+}
+function elegirPropuesta(i, card){
+  card.classList.add('eligiendo');
+  var meta = card.querySelector('.meta'); var prev = meta.textContent;
+  meta.textContent = autoEnviar ? 'Enviando al Garmin…' : 'Preparando…';
+  post('elegir', { indice: i, enviar: autoEnviar }).then(function(d){
+    card.classList.remove('eligiendo'); meta.textContent = prev;
+    if (!d.ok){ msg(d.mensaje || 'No he podido usar esa propuesta.'); return; }
+    pintarEntreno(d.entreno, null, 'Entreno de hoy');
+    if (autoEnviar){ marcarEnviadoUI(!!d.envio_ok); msg(d.envio_msg || (d.envio_ok?'En tu Garmin.':'Elegido, pero no se ha podido enviar.')); }
+    $('resultado').scrollIntoView({ behavior:'smooth', block:'start' });
+  }).catch(function(){
+    card.classList.remove('eligiendo'); meta.textContent = prev;
+    msg('Se ha cortado la conexión al elegir. Vuelve a intentarlo.');
+  });
+}
 
 /* ---------- generar ---------- */
 function datosBienestar(){
@@ -976,8 +1066,9 @@ function equivalencias(p){
   }
   return { prin: (wh>wl? wl+'–'+wh : wl) + ' W', sec: sec };
 }
-function pintarPerfil(contId, entreno){
-  var perfil = $(contId); perfil.innerHTML = '';
+function pintarPerfil(cont, entreno){
+  var perfil = typeof cont === 'string' ? $(cont) : cont;
+  perfil.innerHTML = '';
   pasosVisuales(entreno).forEach(function(p){
     var div = document.createElement('div');
     div.style.flex = String(Math.max(p.seg, 15));
@@ -1098,6 +1189,39 @@ function stepper(texto, onMenos, onMas){
   w.appendChild(m); w.appendChild(v); w.appendChild(p);
   return w;
 }
+function parseDur(txt){
+  txt = String(txt).trim().replace(',', '.').replace(/['"m]/g, ':').replace(/s$/i,'');
+  if (txt.indexOf(':') !== -1){
+    var partes = txt.split(':');
+    var mn = parseFloat(partes[0]) || 0, sg = parseFloat(partes[1]) || 0;
+    if (mn === 0 && sg === 0) return null;
+    return Math.round(mn*60 + sg);
+  }
+  var minutos = parseFloat(txt);
+  if (isNaN(minutos) || minutos <= 0) return null;
+  return Math.round(minutos*60);
+}
+function stepperDur(paso){
+  var w = document.createElement('span'); w.className = 'stp';
+  var m = document.createElement('button'); m.textContent='−'; m.setAttribute('aria-label','Reducir duración');
+  var inp = document.createElement('input');
+  inp.type='text'; inp.inputMode='decimal'; inp.value = fmtSeg(paso.seg);
+  inp.setAttribute('aria-label','Duración del intervalo (minutos o min:seg)');
+  var p = document.createElement('button'); p.textContent='+'; p.setAttribute('aria-label','Aumentar duración');
+  m.addEventListener('click', function(e){ e.stopPropagation(); paso.seg = Math.max(15, paso.seg-30); renderEditor(); });
+  p.addEventListener('click', function(e){ e.stopPropagation(); paso.seg = Math.min(7200, paso.seg+30); renderEditor(); });
+  inp.addEventListener('click', function(e){ e.stopPropagation(); this.select(); });
+  function aplicar(){
+    var s = parseDur(inp.value);
+    if (s === null){ msg('No entiendo esa duración. Escribe minutos ("4,5") o min:seg ("4:30").'); inp.value = fmtSeg(paso.seg); return; }
+    paso.seg = Math.min(7200, Math.max(15, s));
+    renderEditor();
+  }
+  inp.addEventListener('change', aplicar);
+  inp.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); this.blur(); } });
+  w.appendChild(m); w.appendChild(inp); w.appendChild(p);
+  return w;
+}
 function renderEditor(){
   edTotales();
   pintarPerfil('edPerfil', { bloques: ed.data });
@@ -1164,9 +1288,7 @@ function renderEditor(){
 
         var f1 = document.createElement('div'); f1.className='fila';
         f1.innerHTML = '<span class="lbl">Duración</span>';
-        f1.appendChild(stepper(fmtSeg(p.seg),
-          function(){ p.seg = Math.max(15, p.seg-30); },
-          function(){ p.seg = Math.min(7200, p.seg+30); }));
+        f1.appendChild(stepperDur(p));
         pan.appendChild(f1);
 
         if (p.objetivo === 'fc'){
