@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="RODA">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
 <title>RODA · Tu entreno de hoy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,6 +36,12 @@ header .dcha{display:flex;align-items:center;gap:12px}
 .icoBtn{background:none;border:none;color:var(--gris);font-size:20px;cursor:pointer;padding:4px;line-height:1}
 
 .crd{background:var(--card);border:1px solid var(--borde);border-radius:18px;padding:16px;margin-bottom:12px}
+
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tabs .tab{flex:1;padding:9px 0;border-radius:999px;background:var(--panel);border:1px solid var(--borde2);color:#C7CDD6;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer}
+.tabs .tab.on{background:var(--blancoz);border-color:var(--blancoz);color:var(--fondo)}
+.tab-sec{display:none}
+.tab-sec.visible{display:block}
 .lbl{font-size:12px;color:var(--gris);letter-spacing:.02em;margin-bottom:10px}
 .linkBtn{background:none;border:none;font:inherit;font-size:13px;color:var(--rosaclaro);cursor:pointer;padding:2px}
 
@@ -72,6 +80,12 @@ input[type=range].rng:disabled{opacity:.35}
 #detalleHoy{display:none;margin-top:14px;border-top:1px dashed var(--borde);padding-top:12px}
 #detalleHoy.visible{display:block}
 .met3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+
+.metGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}
+.mTile{background:var(--panel);border-radius:12px;padding:9px 4px 7px;text-align:center;min-width:0}
+.mTile b{font-family:'Sora',sans-serif;font-weight:600;font-size:14.5px;display:block;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mTile b i{font-style:normal;font-size:9px;color:var(--gris);margin-left:2px;font-family:'Manrope',sans-serif}
+.mTile span{font-size:9.5px;color:var(--gris);display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .slfila{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .slfila:last-child{margin-bottom:0}
@@ -152,6 +166,13 @@ svg.spark{width:100%;height:58px;display:block}
   </div>
 </header>
 
+<nav class="tabs" role="tablist">
+  <button class="tab on" data-tab="Hoy">Hoy</button>
+  <button class="tab" data-tab="Entreno">Entreno</button>
+  <button class="tab" data-tab="Forma">Forma</button>
+</nav>
+
+<div class="tab-sec visible" id="tabHoy">
 <!-- Cómo llegas hoy -->
 <section class="crd" id="cardHoy">
   <div style="display:flex;justify-content:space-between;align-items:baseline">
@@ -170,6 +191,7 @@ svg.spark{width:100%;height:58px;display:block}
       <div class="det" id="detalleR"></div>
     </div>
   </div>
+  <div class="metGrid" id="metGrid" style="display:none"></div>
   <div id="detalleHoy">
     <div class="met3">
       <div><label for="hrv">HRV (ms)</label><input type="number" id="hrv" inputmode="decimal" placeholder="—"></div>
@@ -200,7 +222,9 @@ svg.spark{width:100%;height:58px;display:block}
     <span class="val" id="vFis">3</span>
   </div>
 </section>
+</div>
 
+<div class="tab-sec" id="tabEntreno">
 <!-- Tu entreno -->
 <section class="crd">
   <div class="lbl">Tu entreno</div>
@@ -284,7 +308,9 @@ svg.spark{width:100%;height:58px;display:block}
     <button class="cta" id="edGuardar" style="padding:11px;font-size:14px">Guardar</button>
   </div>
 </section>
+</div>
 
+<div class="tab-sec" id="tabForma">
 <!-- Estado de forma -->
 <section class="crd">
   <div class="lbl">Estado de forma</div>
@@ -292,10 +318,19 @@ svg.spark{width:100%;height:58px;display:block}
     <div class="tile"><b id="fCtl">–</b><span>Fitness · CTL</span></div>
     <div class="tile"><b id="fAtl">–</b><span>Fatiga · ATL</span></div>
   </div>
-  <div class="tile" style="margin-bottom:14px"><b id="fTsb">–</b><span>Frescura · TSB</span></div>
+  <div class="tile" style="margin-bottom:6px"><b id="fTsb">–</b><span>Frescura · TSB</span></div>
+  <p class="nota" style="margin-bottom:14px">Fitness (CTL) es la misma métrica que la curva de Fitness de Strava.</p>
   <div class="lbl" style="margin-bottom:6px">HRV · últimos 14 días</div>
   <svg class="spark" id="spark" viewBox="0 0 300 58" preserveAspectRatio="none" aria-hidden="true"></svg>
 </section>
+
+<!-- Esfuerzo semanal -->
+<section class="crd">
+  <div class="lbl">Esfuerzo semanal</div>
+  <svg id="esfuerzo" viewBox="0 0 300 110" preserveAspectRatio="xMidYMid meet" style="width:100%;display:block" aria-label="Esfuerzo de las últimas 6 semanas"></svg>
+  <p class="nota" style="margin-top:8px">Suma semanal de esfuerzo por frecuencia cardíaca (TRIMP), lo mismo que mide el Esfuerzo Relativo de Strava.</p>
+</section>
+</div>
 
 <!-- Plan + piloto -->
 <section class="crd" id="planCard">
@@ -468,14 +503,98 @@ $('btnEditarHoy').addEventListener('click', function(){
   if (!abierto) lineaHoy();
 });
 function lineaHoy(){
-  var partes = [];
-  if ($('hrv').value) partes.push('HRV ' + $('hrv').value + ' ms');
-  if ($('sueno').value) partes.push('Sueño ' + $('sueno').value + ' h');
-  if ($('fcr').value) partes.push('FC ' + $('fcr').value);
-  if (partes.length) $('metHoy').textContent = partes.join(' · ');
+  var hoy = Object.assign({}, estado.hoyDatos || {});
+  if ($('hrv').value) hoy.hrv = parseFloat($('hrv').value);
+  if ($('sueno').value) hoy.sueno_h = parseFloat($('sueno').value);
+  if ($('fcr').value) hoy.fc_reposo = parseFloat($('fcr').value);
+  if (Object.keys(hoy).length) pintarMetricas(hoy);
+}
+
+/* ---------- pestañas ---------- */
+function verTab(nombre){
+  ['Hoy','Entreno','Forma'].forEach(function(t){
+    $('tab'+t).classList.toggle('visible', t===nombre);
+  });
+  document.querySelectorAll('.tabs .tab').forEach(function(b){
+    b.classList.toggle('on', b.dataset.tab===nombre);
+  });
+  localStorage.setItem('roda_tab', nombre);
+}
+document.querySelector('.tabs').addEventListener('click', function(e){
+  var b = e.target.closest('.tab'); if (b) verTab(b.dataset.tab);
+});
+verTab(localStorage.getItem('roda_tab') || 'Hoy');
+
+function pintarEsfuerzo(semanas){
+  var svg = $('esfuerzo'); svg.innerHTML = '';
+  if (!semanas || !semanas.length) return;
+  var max = Math.max.apply(null, semanas.map(function(s){ return s.esfuerzo; }).concat([1]));
+  var W=300, H=110, base=88, topPad=16;
+  var n = semanas.length, paso = W/n, ancho = paso*0.56;
+  var etiquetas = semanas.map(function(s,i){ return i===n-1 ? 'Esta' : 'S-'+(n-1-i); });
+  semanas.forEach(function(s,i){
+    var h = max ? Math.max(2,(s.esfuerzo/max)*(base-topPad)) : 2;
+    var x = i*paso + (paso-ancho)/2;
+    var r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x.toFixed(1)); r.setAttribute('y',(base-h).toFixed(1));
+    r.setAttribute('width',ancho.toFixed(1)); r.setAttribute('height',h.toFixed(1));
+    r.setAttribute('rx','5');
+    r.setAttribute('fill', i===n-1 ? '#FF8FAF' : '#FF5C8A');
+    if (i!==n-1) r.setAttribute('opacity','0.55');
+    svg.appendChild(r);
+    var v = document.createElementNS('http://www.w3.org/2000/svg','text');
+    v.setAttribute('x',(i*paso+paso/2).toFixed(1)); v.setAttribute('y',(base-h-5).toFixed(1));
+    v.setAttribute('text-anchor','middle'); v.setAttribute('fill','#E8EBF0');
+    v.setAttribute('style','font-family:Sora,sans-serif;font-size:10.5px;font-weight:600');
+    v.textContent = s.esfuerzo;
+    svg.appendChild(v);
+    var e = document.createElementNS('http://www.w3.org/2000/svg','text');
+    e.setAttribute('x',(i*paso+paso/2).toFixed(1)); e.setAttribute('y','103');
+    e.setAttribute('text-anchor','middle'); e.setAttribute('fill','#8A93A0');
+    e.setAttribute('style','font-size:9.5px');
+    e.textContent = etiquetas[i];
+    svg.appendChild(e);
+  });
 }
 
 /* ---------- pintar estado ---------- */
+function pintarMetricas(hoy){
+  var grid = $('metGrid');
+  if (!hoy){ grid.style.display='none'; return; }
+  var defs = [
+    ['hrv', 'HRV', 'ms', 1],
+    ['sueno_h', 'Sueño', 'h', 1],
+    ['sueno_prof_h', 'Profundo', 'h', 1],
+    ['sueno_rem_h', 'REM', 'h', 1],
+    ['fc_reposo', 'FC reposo', 'ppm', 0],
+    ['resp_min', 'Respiración', 'rpm', 1],
+    ['temp_munyeca', 'Temp. muñeca', '°', 1],
+    ['spo2', 'SpO2', '%', 0],
+    ['pasos', 'Pasos', '', 0],
+    ['kcal_activas', 'Kcal activas', '', 0],
+    ['peso', 'Peso', 'kg', 1]
+  ];
+  grid.innerHTML = '';
+  var n = 0;
+  defs.forEach(function(d){
+    var v = hoy[d[0]];
+    if (v === null || v === undefined || v === '') return;
+    var num = Number(v);
+    if (isNaN(num)) return;
+    var texto = (d[0]==='pasos' || d[0]==='kcal_activas')
+      ? Math.round(num).toLocaleString('es-ES')
+      : (d[3] ? (Math.round(num*10)/10) : Math.round(num)).toLocaleString('es-ES');
+    var t = document.createElement('div'); t.className='mTile';
+    var b = document.createElement('b'); b.textContent = texto;
+    if (d[2]){ var u = document.createElement('i'); u.textContent = d[2]; b.appendChild(u); }
+    var s = document.createElement('span'); s.textContent = d[1];
+    t.appendChild(b); t.appendChild(s); grid.appendChild(t);
+    n++;
+  });
+  grid.style.display = n ? 'grid' : 'none';
+  if (n) $('metHoy').textContent = 'Tus datos de hoy:';
+}
+
 function pintarReadiness(r){
   if (!r) return;
   var colores = { verde:'var(--verde)', ambar:'var(--ambar)', rojo:'var(--rojo)' };
@@ -491,6 +610,9 @@ function pintarReadiness(r){
   }
   $('detalleR').textContent = (r.detalle && r.detalle.length) ? r.detalle.join(' · ') : (tiene ? 'Todo en orden según tus datos.' : '');
   if (r.hoy){
+    estado.extras = { resp: r.hoy.resp_min || null, temp: r.hoy.temp_munyeca || null };
+    estado.hoyDatos = r.hoy;
+    pintarMetricas(r.hoy);
     if (r.hoy.hrv && !$('hrv').value) $('hrv').value = r.hoy.hrv;
     if (r.hoy.sueno_h && !$('sueno').value) $('sueno').value = r.hoy.sueno_h;
     if (r.hoy.fc_reposo && !$('fcr').value) $('fcr').value = r.hoy.fc_reposo;
@@ -565,6 +687,7 @@ function cargarEstado(){
     pintarReadiness(d.readiness);
     pintarForma(d.forma);
     pintarSpark(d.bienestar14);
+    pintarEsfuerzo(d.esfuerzo_semanas);
     preseleccionar(d.planHoy);
     pintarPlan(d.plan);
     if (d.entrenoHoy && d.entrenoHoy.entreno){
@@ -1133,10 +1256,17 @@ function buildWorkoutFit(entreno, ftp, lthr){
   var out=new BW(); all.forEach(function(b){out.u8(b);}); out.u16(crc16(all));
   return new Uint8Array(out.bytes);
 }
+var DIAS_LARGO=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+var MESES_LARGO=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function fechaBonita(iso){
+  var d = iso ? new Date(iso+'T12:00:00') : new Date();
+  return DIAS_LARGO[d.getDay()]+' '+d.getDate()+' '+MESES_LARGO[d.getMonth()];
+}
 $('btnFit').addEventListener('click', function(){
   if (!estado.entreno){ msg('Genera un entreno primero.'); return; }
   try{
-    var fit = buildWorkoutFit(estado.entreno, estado.ftp, estado.lthr);
+    var entFit = Object.assign({}, estado.entreno, { nombre: fechaBonita(estado.fecha) });
+    var fit = buildWorkoutFit(entFit, estado.ftp, estado.lthr);
     var nombre = 'RODA_' + (estado.fecha||'hoy') + '.fit';
     var archivo = new File([fit], nombre, { type:'application/octet-stream' });
     if (navigator.canShare && navigator.canShare({ files:[archivo] })){
