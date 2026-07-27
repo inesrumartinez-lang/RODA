@@ -214,7 +214,7 @@ svg.spark{width:100%;height:58px;display:block}
 <!-- Cómo llegas hoy -->
 <section class="crd" id="cardHoy">
   <div style="display:flex;justify-content:space-between;align-items:baseline">
-    <div class="lbl" style="margin-bottom:12px">Cómo llegas hoy</div>
+    <div class="lbl" style="margin-bottom:12px">Estado general</div>
     <button class="linkBtn" id="btnEditarHoy">Editar</button>
   </div>
   <div class="semaforo">
@@ -229,7 +229,6 @@ svg.spark{width:100%;height:58px;display:block}
       <div class="det" id="detalleR"></div>
     </div>
   </div>
-  <div class="metGrid" id="metGrid" style="display:none"></div>
   <div id="detalleHoy">
     <div class="met3">
       <div><label for="hrv">HRV (ms)</label><input type="number" id="hrv" inputmode="decimal" placeholder="—"></div>
@@ -243,7 +242,7 @@ svg.spark{width:100%;height:58px;display:block}
 
 <!-- Salud del reloj -->
 <section class="crd" id="cardSalud">
-  <div class="lbl" style="margin-bottom:4px">Salud del reloj</div>
+  <div class="lbl" style="margin-bottom:4px">Estado físico</div>
   <div class="nota" id="saludEstado" style="margin-bottom:0">Esperando datos del reloj…</div>
   <div class="nota" id="cicloLinea" style="display:none;margin:8px 0 0"></div>
   <div id="anillosGrid" style="display:none;margin-top:12px"></div>
@@ -253,7 +252,7 @@ svg.spark{width:100%;height:58px;display:block}
 <!-- Sensaciones -->
 <section class="crd" id="cardSens">
   <div style="display:flex;justify-content:space-between;align-items:baseline">
-    <div class="lbl">Sensaciones de hoy</div>
+    <div class="lbl">Estado mental</div>
     <button class="linkBtn" id="btnEditSens" style="display:none">Editar</button>
   </div>
   <div id="sensSliders">
@@ -385,7 +384,6 @@ svg.spark{width:100%;height:58px;display:block}
     <div class="tile"><b id="fAtl">–</b><span>Fatiga · ATL</span></div>
   </div>
   <div class="tile" style="margin-bottom:6px"><b id="fTsb">–</b><span>Frescura · TSB</span></div>
-  <p class="nota" style="margin-bottom:14px">Fitness (CTL) es la misma métrica que la curva de Fitness de Strava.</p>
   <div class="lbl" style="margin-bottom:6px">HRV · últimos 14 días</div>
   <svg class="spark" id="spark" viewBox="0 0 300 58" preserveAspectRatio="none" aria-hidden="true"></svg>
 </section>
@@ -583,12 +581,13 @@ function pintarSens(){
   res.innerHTML = '';
   var grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px';
-  [['Motivación', s.motivacion, '#47698C'],['F. mental', s.fatiga_mental, '#47698C'],['F. física', s.fatiga_fisica, '#47698C']].forEach(function(d){
+  [['Motivación', s.motivacion, s.motivacion <= 2],['F. mental', s.fatiga_mental, s.fatiga_mental >= 4],['F. física', s.fatiga_fisica, s.fatiga_fisica >= 4]].forEach(function(d){
     var t = document.createElement('div'); t.className = 'aniTile noclick';
     var C = 2*Math.PI*25;
+    var colorS = d[2] ? '#9B1B30' : '#47698C';
     t.innerHTML = '<svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true">' +
       '<circle cx="30" cy="30" r="25" fill="none" stroke="#C9DEF0" stroke-width="6.5"/>' +
-      '<circle cx="30" cy="30" r="25" fill="none" stroke="'+d[2]+'" stroke-width="6.5" stroke-linecap="round"' +
+      '<circle cx="30" cy="30" r="25" fill="none" stroke="'+colorS+'" stroke-width="6.5" stroke-linecap="round"' +
       ' transform="rotate(-90 30 30)" stroke-dasharray="'+(C*Math.max(0.04, d[1]/5)).toFixed(1)+' '+C.toFixed(1)+'"/>' +
       '<text x="30" y="35" text-anchor="middle" fill="#16324F" style="font-family:Space Grotesk,sans-serif;font-size:14.5px;font-weight:600">'+d[1]+'</text>' +
       '</svg><span></span>';
@@ -947,34 +946,9 @@ function pintarEsfuerzo(semanas){
 
 /* ---------- pintar estado ---------- */
 function pintarMetricas(hoy){
-  var grid = $('metGrid');
-  if (!hoy){ grid.style.display='none'; return; }
-  var defs = [
-    ['resp_min', 'Respiración', 'rpm', 1],
-    ['temp_munyeca', 'Temp. muñeca', '°', 1],
-    ['spo2', 'SpO2', '%', 0],
-    ['pasos', 'Pasos', '', 0],
-    ['kcal_activas', 'Kcal activas', '', 0]
-  ];
-  grid.innerHTML = '';
-  var n = 0;
-  defs.forEach(function(d){
-    var v = hoy[d[0]];
-    if (v === null || v === undefined || v === '') return;
-    var num = Number(v);
-    if (isNaN(num)) return;
-    var texto = (d[0]==='pasos' || d[0]==='kcal_activas')
-      ? Math.round(num).toLocaleString('es-ES')
-      : (d[3] ? (Math.round(num*10)/10) : Math.round(num)).toLocaleString('es-ES');
-    var t = document.createElement('div'); t.className='mTile';
-    var b = document.createElement('b'); b.textContent = texto;
-    if (d[2]){ var u = document.createElement('i'); u.textContent = d[2]; b.appendChild(u); }
-    var s = document.createElement('span'); s.textContent = d[1];
-    t.appendChild(b); t.appendChild(s); grid.appendChild(t);
-    n++;
-  });
-  grid.style.display = n ? 'grid' : 'none';
-  if (n) $('metHoy').textContent = 'Tus datos de hoy:';
+  if (!hoy) return;
+  var alguna = ['hrv','sueno_h','fc_reposo','resp_min'].some(function(k){ return Number(hoy[k]); });
+  if (alguna) $('metHoy').textContent = '';
 }
 
 /* ---------- anillos de salud del reloj ---------- */
@@ -989,6 +963,7 @@ function rango14(campo){
   return { min: Math.min.apply(null, vals), max: Math.max.apply(null, vals) };
 }
 function fmt1(v){ return (Math.round(v*10)/10).toLocaleString('es-ES'); }
+var PIZARRA = '#47698C', GRANATE = '#9B1B30';
 var aniAbierto = null;
 function pintarAnillos(hoy, ciclo){
   var est = $('saludEstado'), grid = $('anillosGrid'), det = $('anilloDetalle'), cic = $('cicloLinea');
@@ -1006,17 +981,22 @@ function pintarAnillos(hoy, ciclo){
     grid.style.display = 'none'; det.style.display = 'none';
     return;
   }
-  est.textContent = '✓ Datos del reloj actualizados hoy · ' + recibidas.length + ' métricas recibidas';
-  est.style.color = 'var(--verde)';
+  var ahora = new Date();
+  var DS = ['dom','lun','mar','mié','jue','vie','sáb'];
+  est.textContent = 'Actualizados · ' + DS[ahora.getDay()] + ' ' + ahora.getDate() + ' · ' + ahora.getHours() + ':' + ('0'+ahora.getMinutes()).slice(-2);
+  est.style.color = 'var(--gris)';
   var mHrv = media14('hrv'), mFcr = media14('fc_reposo'), mSue = media14('sueno_h');
+  var mResp = media14('resp_min'), mTemp = media14('temp_munyeca');
   var rHrv = rango14('hrv'), rFcr = rango14('fc_reposo');
   var tot = Number(hoy.sueno_h)||0, prof = Number(hoy.sueno_prof_h)||0, rem = Number(hoy.sueno_rem_h)||0;
   var ligero = tot ? Math.max(0, tot-prof-rem) : 0;
   var scoreApple = Number(hoy.sueno_score) || null;
   var calidad = scoreApple ? Math.round(scoreApple) : ((tot && (prof||rem)) ? Math.min(100, Math.round(((prof+rem)/tot)/0.45*100)) : null);
+  var resp = Number(hoy.resp_min)||0, temp = Number(hoy.temp_munyeca)||0, spo2 = Number(hoy.spo2)||0;
   var defs = [
-    { id:'sueno', label:'Sueño · h', color:'#47698C',
+    { id:'sueno', label:'Sueño · h',
       val: tot ? fmt1(tot) : '–', frac: tot ? Math.min(1, tot/8) : 0,
+      malo: !!tot && tot < 6,
       detalle: tot ? [
         ['Total', fmt1(tot)+' h'],
         ['Profundo', prof ? fmt1(prof)+' h' : '—'],
@@ -1025,8 +1005,9 @@ function pintarAnillos(hoy, ciclo){
         ['Media 14 días', mSue ? fmt1(mSue)+' h' : '—'],
         ['Objetivo', '8 h']
       ] : null },
-    { id:'calidad', label:'Calidad · %', color:'#47698C',
+    { id:'calidad', label:'Calidad · %',
       val: calidad !== null ? calidad : '–', frac: calidad !== null ? calidad/100 : 0,
+      malo: calidad !== null && calidad < 50,
       detalle: calidad !== null ? (scoreApple ? [
         ['Puntuación del reloj', Math.round(scoreApple)+' / 100']
       ].concat((tot && (prof||rem)) ? [
@@ -1037,28 +1018,55 @@ function pintarAnillos(hoy, ciclo){
         ['Profundo + REM', fmt1(prof+rem)+' h de '+fmt1(tot)+' h'],
         ['Cómo se calcula', '% de profundo+REM sobre el total · ≥45% = 100']
       ]) : null },
-    { id:'hrv', label:'HRV · ms', color:'#47698C',
+    { id:'hrv', label:'HRV · ms',
       val: hoy.hrv ? Math.round(hoy.hrv) : '–',
       frac: hoy.hrv ? (mHrv ? Math.min(1, hoy.hrv/(mHrv*1.05)) : 0.75) : 0,
+      malo: !!(hoy.hrv && mHrv && hoy.hrv < mHrv*0.85),
       detalle: hoy.hrv ? [
         ['Hoy', Math.round(hoy.hrv)+' ms'],
         ['Media 14 días', mHrv ? Math.round(mHrv)+' ms' : '—'],
         ['Máxima 14 días', rHrv ? Math.round(rHrv.max)+' ms' : '—'],
         ['Mínima 14 días', rHrv ? Math.round(rHrv.min)+' ms' : '—']
       ] : null },
-    { id:'fcr', label:'FC rep. · ppm', color:'#47698C',
+    { id:'fcr', label:'FC rep. · ppm',
       val: hoy.fc_reposo ? Math.round(hoy.fc_reposo) : '–',
       frac: hoy.fc_reposo ? (mFcr ? Math.min(1, mFcr/hoy.fc_reposo) : 0.75) : 0,
+      malo: !!(hoy.fc_reposo && mFcr && (hoy.fc_reposo - mFcr) >= 5),
       detalle: hoy.fc_reposo ? [
         ['Hoy', Math.round(hoy.fc_reposo)+' ppm'],
         ['Media 14 días', mFcr ? Math.round(mFcr)+' ppm' : '—'],
         ['Mínima 14 días', rFcr ? Math.round(rFcr.min)+' ppm' : '—'],
         ['Máxima 14 días', rFcr ? Math.round(rFcr.max)+' ppm' : '—']
+      ] : null },
+    { id:'resp', label:'Resp. · rpm',
+      val: resp ? fmt1(resp) : '–',
+      frac: resp ? (mResp ? Math.min(1, mResp/resp) : 0.75) : 0,
+      malo: !!(resp && mResp && (resp - mResp) >= 1.5),
+      detalle: resp ? [
+        ['Hoy', fmt1(resp)+' rpm'],
+        ['Media 14 días', mResp ? fmt1(mResp)+' rpm' : '—']
+      ] : null },
+    { id:'temp', label:'Temp. · °C',
+      val: temp ? fmt1(temp) : '–',
+      frac: temp ? (mTemp ? Math.min(1, Math.max(0.15, 1 - Math.max(0, temp - mTemp)/0.8)) : 0.75) : 0,
+      malo: !!(temp && mTemp && (temp - mTemp) >= 0.3),
+      detalle: temp ? [
+        ['Hoy', fmt1(temp)+' °C'],
+        ['Media 14 días', mTemp ? fmt1(mTemp)+' °C' : '—']
+      ] : null },
+    { id:'spo2', label:'SpO2 · %',
+      val: spo2 ? Math.round(spo2) : '–',
+      frac: spo2 ? spo2/100 : 0,
+      malo: !!(spo2 && spo2 < 94),
+      detalle: spo2 ? [
+        ['Hoy', Math.round(spo2)+' %'],
+        ['Saludable', '95–100%']
       ] : null }
-  ];
+  ].filter(function(d){ return d.val !== '–'; });
   grid.style.display = 'grid'; grid.innerHTML = '';
   det.style.display = 'none'; det.innerHTML = '';
   defs.forEach(function(d){
+    var color = d.malo ? GRANATE : PIZARRA;
     var C = 2*Math.PI*25;
     var t = document.createElement('div');
     t.className = 'aniTile' + (d.detalle ? '' : ' noclick');
@@ -1066,12 +1074,13 @@ function pintarAnillos(hoy, ciclo){
     t.innerHTML =
       '<svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true">' +
       '<circle cx="30" cy="30" r="25" fill="none" stroke="#C9DEF0" stroke-width="6.5"/>' +
-      '<circle cx="30" cy="30" r="25" fill="none" stroke="'+d.color+'" stroke-width="6.5" stroke-linecap="round"' +
+      '<circle cx="30" cy="30" r="25" fill="none" stroke="'+color+'" stroke-width="6.5" stroke-linecap="round"' +
       ' transform="rotate(-90 30 30)" stroke-dasharray="'+(C*Math.max(0.02, d.frac)).toFixed(1)+' '+C.toFixed(1)+'"' +
       (d.frac ? '' : ' opacity="0.25"') + '/>' +
       '<text x="30" y="35" text-anchor="middle" fill="#16324F" style="font-family:Space Grotesk,sans-serif;font-size:14.5px;font-weight:600">'+d.val+'</text>' +
       '</svg><span></span>';
     t.querySelector('span').textContent = d.label;
+    if (d.malo) t.querySelector('span').style.color = GRANATE;
     if (d.detalle){
       t.addEventListener('click', function(){
         if (aniAbierto === d.id){
@@ -1086,7 +1095,9 @@ function pintarAnillos(hoy, ciclo){
         var cab = document.createElement('div'); cab.className = 'cabDet';
         cab.textContent = d.label.split(' ·')[0];
         det.appendChild(cab);
-        d.detalle.forEach(function(fila){
+        var filas = d.detalle.slice();
+        if (d.malo) filas.unshift(['⚠ Aviso', 'fuera de tu rango habitual']);
+        filas.forEach(function(fila){
           var f = document.createElement('div'); f.className = 'filaDet';
           var s = document.createElement('span'); s.textContent = fila[0];
           var b = document.createElement('b'); b.textContent = fila[1];
@@ -1099,8 +1110,8 @@ function pintarAnillos(hoy, ciclo){
   });
   if (aniAbierto){
     var abierto = aniAbierto; aniAbierto = null;
-    var idx = { sueno:0, calidad:1, hrv:2, fcr:3 }[abierto];
-    var tile = grid.children[idx];
+    var idx = defs.map(function(d){ return d.id; }).indexOf(abierto);
+    var tile = idx >= 0 ? grid.children[idx] : null;
     if (tile && !tile.classList.contains('noclick')) tile.click();
   }
 }
